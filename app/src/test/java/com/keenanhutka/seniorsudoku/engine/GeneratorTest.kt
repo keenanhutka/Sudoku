@@ -11,8 +11,7 @@ class GeneratorTest {
             repeat(20) {
                 val puzzle = newPuzzle(level)
                 assertEquals(level, puzzle.level)
-                assertTrue(puzzle.clueCount >= level.minimumClues)
-                assertTrue(puzzle.clueCount <= level.minimumClues + 1)
+                assertEquals(level.minimumClues, puzzle.clueCount)
                 assertEquals(puzzle.clueCount, puzzle.board.toText().count { it != '0' })
                 assertSymmetric(puzzle.board)
                 assertGivensMatch(puzzle)

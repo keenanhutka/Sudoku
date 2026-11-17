@@ -40,7 +40,7 @@ This can still change before the first Google Play upload. After that upload it 
 - No ads library and no billing library yet.
 - Naked singles are offered before hidden singles. A filled cell that disagrees with the solution is reported as a mistake, and no hint is given until that cell is fixed.
 - No pairs, triples, or X-Wing. v1 hints stay singles only.
-- Easy keeps at least 40 clues and needs no hidden single. Medium keeps at least 32 and needs 1 to 4. Hard keeps at least 28, needs 5 or more, and singles alone cannot finish it. A puzzle that misses its grade is thrown away.
+- Easy keeps 40 clues and needs no hidden single. Medium keeps 32 and needs 1 to 4. Hard keeps 28, needs 5 or more, and singles alone cannot finish it. The center clue is removed first so the count can land on that floor. A puzzle that misses its grade is thrown away.
 - Clues are removed in 180-degree pairs. The generator only shuffles a known finished grid. It does not invent one.
 - Today's puzzle is Medium, and the date picks the random choices. No network. February 29 is allowed only in a leap year. November 31 is rejected.
 
@@ -49,7 +49,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 2, Nov 16 2026: SDK levels, libraries, six packages, and Git are set up. Ads and billing are not added.
 - Step 3, Nov 16 2026: the board and the solution counter. All 7 unit tests passed, and a debug app file builds.
 - Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
-- Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. A later check rejected impossible dates such as November 31. Every day of 2026 makes a different Medium puzzle. Unit tests passed.
+- Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. A later check rejected impossible dates, and another check made sure the center clue is removed so the clue count lands on the floor. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.

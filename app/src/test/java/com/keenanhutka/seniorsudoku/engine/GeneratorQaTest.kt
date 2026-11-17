@@ -20,13 +20,8 @@ class GeneratorQaTest {
                 seen += puzzle.board.toText()
                 assertEquals(level, puzzle.level)
                 assertEquals(puzzle.solution.toText(), solve(puzzle.board)?.toText())
-                if (puzzle.clueCount % 2 == 0) {
-                    assertEquals(0, puzzle.board[40])
-                } else {
-                    assertTrue(puzzle.board[40] != 0)
-                    val withoutCenter = puzzle.board.withDigit(40, 0)
-                    assertTrue(countSolutions(withoutCenter, limit = 2) != 1)
-                }
+                assertEquals(level.minimumClues, puzzle.clueCount)
+                assertEquals(0, puzzle.board[40])
                 var board = puzzle.board
                 val walk = solveWithSinglesOnly(board)
                 for (step in walk.steps) {
@@ -53,9 +48,36 @@ class GeneratorQaTest {
 
     @Test
     fun onePuzzleAgreesWithASeparateSolver() {
-        val puzzle = newPuzzle(Level.Easy, Random(99))
-        assertEquals(1, separateCount(puzzle.board, limit = 2))
-        assertEquals(puzzle.solution.toText(), separateSolve(puzzle.board))
+        val easy = newPuzzle(Level.Easy, Random(99))
+        val hard = newPuzzle(Level.Hard, Random(99))
+        assertEquals(1, separateCount(easy.board, limit = 2))
+        assertEquals(easy.solution.toText(), separateSolve(easy.board))
+        assertEquals(1, separateCount(hard.board, limit = 2))
+        assertEquals(hard.solution.toText(), separateSolve(hard.board))
+        val two = Board.fromText(
+            "915270683204603015683905274102706809706009152009152006391027060527408001068300507",
+        )
+        assertEquals(2, separateCount(two, limit = 3))
+    }
+
+    @Test
+    fun aLeapYearOfDailyPuzzlesAreAllDifferent() {
+        val texts = HashSet<String>()
+        for (month in 1..12) {
+            for (day in 1..31) {
+                val date = try {
+                    PuzzleDate(2024, month, day)
+                } catch (_: IllegalArgumentException) {
+                    continue
+                }
+                assertTrue(texts.add(dailyPuzzle(date).board.toText()))
+            }
+        }
+        assertEquals(366, texts.size)
+        assertTrue(
+            dailyPuzzle(PuzzleDate(2024, 2, 29)).board.toText() !=
+                dailyPuzzle(PuzzleDate(2026, 1, 1)).board.toText(),
+        )
     }
 
     @Test

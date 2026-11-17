@@ -69,15 +69,17 @@ private val seedGrid: IntArray = intArrayOf(
     3, 4, 5, 2, 8, 6, 1, 7, 9,
 )
 
-private val pairA: IntArray = IntArray(41) { slot -> if (slot == 40) 40 else slot }
-private val pairB: IntArray = IntArray(41) { slot -> if (slot == 40) 40 else 80 - slot }
+private const val CENTER_SLOT = 40
+
+private val pairA: IntArray = IntArray(41) { slot -> if (slot == CENTER_SLOT) CENTER_SLOT else slot }
+private val pairB: IntArray = IntArray(41) { slot -> if (slot == CENTER_SLOT) CENTER_SLOT else 80 - slot }
 
 private fun attempt(level: Level, random: Random): Puzzle? {
     val solution = shuffledSolution(random)
     val grid = solution.copyOf()
     dig(grid, level.minimumClues, random)
     val clueCount = grid.count { it != 0 }
-    if (clueCount > level.minimumClues + 1) return null
+    if (clueCount != level.minimumClues) return null
     val board = Board.fromDigits(grid)
     val singles = solveWithSinglesOnly(board)
     if (!gradeMatches(level, singles)) return null
@@ -134,6 +136,10 @@ private fun reorder(grid: IntArray, rowOrder: IntArray, columnOrder: IntArray): 
 }
 
 private fun dig(grid: IntArray, floor: Int, random: Random) {
+    // The center is a pair by itself. Take it before anything else. From a
+    // finished grid it always has one solution, and taking it later can fail
+    // once other clues are gone, which would leave one clue too many.
+    removePair(grid, CENTER_SLOT, floor)
     repeat(8) {
         var removedAny = false
         val order = (pairA.indices).shuffled(random)
