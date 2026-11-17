@@ -43,7 +43,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.
 - Step 2, Nov 16 2026: SDK levels, libraries, six packages, and Git are set up. Ads and billing are not added.
 - Step 3, Nov 16 2026: the board and the solution counter. All 7 unit tests passed, and a debug app file builds.
-- Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. Unit tests passed.
+- Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
