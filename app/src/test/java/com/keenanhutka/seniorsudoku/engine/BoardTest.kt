@@ -26,7 +26,25 @@ class BoardTest {
     fun realPuzzleHasExactlyOneSolution() {
         val board = Board.fromText(UNIQUE)
         assertEquals(1, countSolutions(board, limit = 2))
-        assertEquals(UNIQUE_SOLUTION, solve(board)?.toText())
+        val solved = solve(board)
+        assertEquals(UNIQUE_SOLUTION, solved?.toText())
+        assertEquals(UNIQUE, board.toText())
+    }
+
+    @Test
+    fun knownSolutionMatchesTheCluesAndEveryHouse() {
+        val puzzle = Board.fromText(UNIQUE)
+        val solved = Board.fromText(UNIQUE_SOLUTION)
+        for (index in 0 until Board.CELL_COUNT) {
+            if (puzzle[index] != 0) assertEquals(puzzle[index], solved[index])
+        }
+        val digits = (1..9).toSet()
+        for (house in 0 until Board.SIZE) {
+            assertEquals(digits, solved.row(house).toSet())
+            assertEquals(digits, solved.column(house).toSet())
+            assertEquals(digits, solved.box(house).toSet())
+        }
+        assertEquals(1, countSolutions(solved, limit = 2))
     }
 
     @Test
