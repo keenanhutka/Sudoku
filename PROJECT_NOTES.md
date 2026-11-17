@@ -22,6 +22,8 @@ This can still change before the first Google Play upload. After that upload it 
 - ui/Theme.kt: the paper colors.
 - engine/Board.kt: the 9 by 9 grid, with no Android code.
 - engine/Solver.kt: finds whether a puzzle has one solution, and stops early.
+- engine/Singles.kt: the next naked or hidden single, in plain words, and a check for a wrong number.
+- app/src/test/.../SinglesTest.kt: checks those hints and prints a full explanation.
 - game/GamePackage.kt: placeholder for the game state.
 - data/DataPackage.kt: placeholder for saving on the phone.
 - ads/AdsPackage.kt: placeholder for the one ad.
@@ -34,14 +36,17 @@ This can still change before the first Google Play upload. After that upload it 
 - Android Gradle Plugin 9.5.0, Gradle 9.6.0, Kotlin 2.4.10. AGP 9 already includes Kotlin, so the separate Kotlin Android plugin is not applied. Source: https://kotlinlang.org/docs/compose-compiler-migration-guide.html
 - Libraries: Compose BOM 2026.09.00, Material 3 (from that BOM), activity-compose 1.13.0, lifecycle ViewModel Compose 2.11.0, lifecycle runtime Compose 2.11.0, core-ktx 1.19.1, DataStore Preferences 1.3.0, coroutines 1.11.0, JUnit 4.13.2.
 - No ads library and no billing library yet.
+- Naked singles are offered before hidden singles. A filled cell that disagrees with the solution is reported as a mistake, and no hint is given until that cell is fixed.
+- No pairs, triples, or X-Wing. v1 hints stay singles only.
 
 # Steps finished
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.
 - Step 2, Nov 16 2026: SDK levels, libraries, six packages, and Git are set up. Ads and billing are not added.
 - Step 3, Nov 16 2026: the board and the solution counter. All 7 unit tests passed, and a debug app file builds.
+- Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. Unit tests passed.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
 
 # Next step
-Step 4: singles-only solver that explains the next hint in plain words.
+Step 5: puzzle generator, Easy / Medium / Hard, and the daily puzzle.
