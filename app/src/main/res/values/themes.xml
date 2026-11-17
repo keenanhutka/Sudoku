@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.SeniorSudoku" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#F4EFE4</item>
+        <item name="android:navigationBarColor">#F4EFE4</item>
+        <item name="android:windowBackground">#F4EFE4</item>
+    </style>
+</resources>
