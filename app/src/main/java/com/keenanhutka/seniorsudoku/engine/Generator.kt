@@ -23,7 +23,7 @@ data class PuzzleDate(val year: Int, val month: Int, val day: Int) {
     init {
         require(year in 1..9999) { "Year is out of range." }
         require(month in 1..12) { "Month is out of range." }
-        require(day in 1..31) { "Day is out of range." }
+        require(day in 1..daysInMonth(year, month)) { "Day is out of range." }
     }
 }
 
@@ -46,6 +46,13 @@ fun newPuzzle(level: Level, random: Random = Random): Puzzle {
 fun dailyPuzzle(date: PuzzleDate): Puzzle {
     val seed = date.year * 372L + date.month * 31L + date.day
     return newPuzzle(Level.Medium, Random(seed))
+}
+
+private fun daysInMonth(year: Int, month: Int): Int = when (month) {
+    1, 3, 5, 7, 8, 10, 12 -> 31
+    4, 6, 9, 11 -> 30
+    2 -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
+    else -> 0
 }
 
 private const val MAX_ATTEMPTS = 60
