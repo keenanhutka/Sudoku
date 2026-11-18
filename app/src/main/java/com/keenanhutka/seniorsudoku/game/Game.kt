@@ -50,10 +50,8 @@ class Game private constructor(
         requireCell(index)
         require(digit in 1..9) { "A digit is 1 to 9." }
         if (isGiven(index)) return this
-        if (board[index] == digit && notes[index].isEmpty()) return this
-        val nextNotes = notes.toMutableList()
-        nextNotes[index] = emptySet()
-        return remember(board.withDigit(index, digit), nextNotes)
+        if (board[index] == digit && notes[index].isEmpty() && !peerHasNote(index, digit)) return this
+        return remember(board.withDigit(index, digit), notesAfterPlacing(index, digit))
     }
 
     /** Erases a number or notes the player added. A clue stays. */
@@ -71,7 +69,9 @@ class Game private constructor(
         requireCell(index)
         require(digit in 1..9) { "A digit is 1 to 9." }
         if (isGiven(index) || board[index] != 0) return this
-        val next = if (digit in notes[index]) notes[index] - digit else notes[index] + digit
+        val removing = digit in notes[index]
+        if (!removing && digitIsPlacedNearby(index, digit)) return this
+        val next = if (removing) notes[index] - digit else notes[index] + digit
         val nextNotes = notes.toMutableList()
         nextNotes[index] = next
         return remember(board, nextNotes)
@@ -88,6 +88,40 @@ class Game private constructor(
 
     private fun requireCell(index: Int) {
         require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
+    }
+
+    /** Same row, column, or box. A cell does not see itself. */
+    private fun sees(index: Int, other: Int): Boolean {
+        if (index == other) return false
+        val row = index / Board.SIZE
+        val column = index % Board.SIZE
+        val otherRow = other / Board.SIZE
+        val otherColumn = other % Board.SIZE
+        if (row == otherRow || column == otherColumn) return true
+        return row / Board.BOX == otherRow / Board.BOX && column / Board.BOX == otherColumn / Board.BOX
+    }
+
+    private fun peerHasNote(index: Int, digit: Int): Boolean {
+        for (other in 0 until Board.CELL_COUNT) {
+            if (sees(index, other) && digit in notes[other]) return true
+        }
+        return false
+    }
+
+    private fun digitIsPlacedNearby(index: Int, digit: Int): Boolean {
+        for (other in 0 until Board.CELL_COUNT) {
+            if (sees(index, other) && board[other] == digit) return true
+        }
+        return false
+    }
+
+    private fun notesAfterPlacing(index: Int, digit: Int): List<Set<Int>> {
+        val next = notes.toMutableList()
+        next[index] = emptySet()
+        for (other in 0 until Board.CELL_COUNT) {
+            if (sees(index, other) && digit in next[other]) next[other] = next[other] - digit
+        }
+        return next
     }
 
     private data class Moment(val board: Board, val notes: List<Set<Int>>)

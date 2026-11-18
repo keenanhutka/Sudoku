@@ -41,34 +41,40 @@ class GameTest {
 
     @Test
     fun notesComeBackWhenAPlacedNumberIsUndone() {
-        val hole = firstHole()
-        val other = secondHole(hole)
+        val hole = openCell(2)
+        val other = (0 until Board.CELL_COUNT).first {
+            it != hole && puzzle.board[it] == 0 && freeDigits(it).isNotEmpty()
+        }
         val wrong = otherDigit(hole)
+        val (first, second) = freeDigits(hole)
+        val otherNote = freeDigits(other).first()
         val game = Game.start(puzzle)
-            .toggleNote(hole, 1)
-            .toggleNote(hole, 8)
-            .toggleNote(other, 5)
-        assertEquals(setOf(1, 8), game.notesAt(hole))
+            .toggleNote(hole, first)
+            .toggleNote(hole, second)
+            .toggleNote(other, otherNote)
+        assertEquals(setOf(first, second), game.notesAt(hole))
         val placed = game.enterDigit(hole, wrong)
         assertEquals(wrong, placed.board[hole])
         assertTrue(placed.notesAt(hole).isEmpty())
-        assertEquals(setOf(5), placed.notesAt(other))
+        if (sees(hole, other) && otherNote == wrong) assertTrue(placed.notesAt(other).isEmpty())
+        else assertEquals(setOf(otherNote), placed.notesAt(other))
         assertTrue(placed.isWrong(hole))
         assertEquals(listOf(hole), placed.wrongCells())
         val undone = placed.undo()
         assertEquals(0, undone.board[hole])
-        assertEquals(setOf(1, 8), undone.notesAt(hole))
-        assertEquals(setOf(5), undone.notesAt(other))
+        assertEquals(setOf(first, second), undone.notesAt(hole))
+        assertEquals(setOf(otherNote), undone.notesAt(other))
         assertFalse(undone.isWrong(hole))
     }
 
     @Test
     fun togglingANoteTwiceRemovesItAndUndoRestoresIt() {
         val hole = firstHole()
-        val noted = Game.start(puzzle).toggleNote(hole, 8)
-        val cleared = noted.toggleNote(hole, 8)
+        val note = freeDigit(hole)
+        val noted = Game.start(puzzle).toggleNote(hole, note)
+        val cleared = noted.toggleNote(hole, note)
         assertTrue(cleared.notesAt(hole).isEmpty())
-        assertEquals(setOf(8), cleared.undo().notesAt(hole))
+        assertEquals(setOf(note), cleared.undo().notesAt(hole))
     }
 
     @Test
@@ -138,14 +144,17 @@ class GameTest {
 
     @Test
     fun changingTheNotesYouWereGivenDoesNotChangeTheGameOrUndo() {
-        val hole = firstHole()
-        val game = Game.start(puzzle).toggleNote(hole, 1).toggleNote(hole, 2)
-        val leaked = game.notesAt(hole) as MutableSet<Int>
-        leaked.add(3)
-        assertEquals(setOf(1, 2), game.notesAt(hole))
-        val next = game.toggleNote(hole, 4)
-        assertEquals(setOf(1, 2, 4), next.notesAt(hole))
-        assertEquals(setOf(1, 2), next.undo().notesAt(hole))
+        val hole = openCell(3)
+        val (note, second, third) = freeDigits(hole)
+        val game = Game.start(puzzle).toggleNote(hole, note).toggleNote(hole, second)
+        val kept = game.notesAt(hole)
+        val expected = kept.toSet()
+        val leaked = kept as MutableSet<Int>
+        leaked.add((1..9).first { it !in expected })
+        assertEquals(expected, game.notesAt(hole))
+        val next = game.toggleNote(hole, third)
+        assertEquals(setOf(note, second, third), next.notesAt(hole))
+        assertEquals(setOf(note, second), next.undo().notesAt(hole))
     }
 
     @Test
@@ -175,7 +184,8 @@ class GameTest {
     @Test
     fun clearThenUndoThreeTimesRestoresTheNoteTheNumberAndTheStart() {
         val hole = firstHole()
-        val noted = Game.start(puzzle).toggleNote(hole, 8)
+        val note = freeDigit(hole)
+        val noted = Game.start(puzzle).toggleNote(hole, note)
         val placed = noted.enterDigit(hole, otherDigit(hole))
         val cleared = placed.clearCell(hole)
         assertEquals(0, cleared.board[hole])
@@ -185,7 +195,7 @@ class GameTest {
         assertTrue(backToNumber.notesAt(hole).isEmpty())
         val backToNote = backToNumber.undo()
         assertEquals(0, backToNote.board[hole])
-        assertEquals(setOf(8), backToNote.notesAt(hole))
+        assertEquals(setOf(note), backToNote.notesAt(hole))
         val start = backToNote.undo()
         assertTrue(start.notesAt(hole).isEmpty())
         assertFalse(start.canUndo())
@@ -236,9 +246,13 @@ class GameTest {
     @Test
     fun followingHintsFinishesAnEasyGameAndUndoRestoresTheNote() {
         val hole = firstHole()
-        var game = Game.start(puzzle).toggleNote(hole, 8)
-        assertEquals(setOf(8), game.notesAt(hole))
+        val noteDigit = (1..9).first { candidate ->
+            (0 until Board.CELL_COUNT).none { sees(hole, it) && puzzle.board[it] == candidate }
+        }
+        var game = Game.start(puzzle).toggleNote(hole, noteDigit)
+        assertEquals(setOf(noteDigit), game.notesAt(hole))
         var holeOpen = true
+        var noteCleared = false
         var moves = 0
         while (!game.isComplete()) {
             val hint = findHint(game.board, game.solution)
@@ -247,10 +261,14 @@ class GameTest {
             val index = (step.row - 1) * Board.SIZE + (step.column - 1)
             assertEquals(0, game.board[index])
             assertEquals(puzzle.solution[index], step.digit)
-            if (holeOpen && index != hole) assertEquals(setOf(8), game.notesAt(hole))
+            if (holeOpen && index != hole) {
+                if (noteCleared) assertTrue(game.notesAt(hole).isEmpty())
+                else assertEquals(setOf(noteDigit), game.notesAt(hole))
+            }
             game = game.enterDigit(index, step.digit)
             assertTrue(game.notesAt(index).isEmpty())
             assertFalse(game.isWrong(index))
+            if (index != hole && sees(hole, index) && step.digit == noteDigit) noteCleared = true
             if (index == hole) holeOpen = false
             moves++
             assertTrue(moves <= Board.CELL_COUNT)
@@ -258,7 +276,7 @@ class GameTest {
         assertTrue(game.wrongCells().isEmpty())
         repeat(moves) { game = game.undo() }
         assertEquals(puzzle.board.toText(), game.board.toText())
-        assertEquals(setOf(8), game.notesAt(hole))
+        assertEquals(setOf(noteDigit), game.notesAt(hole))
         val backToStart = game.undo()
         assertTrue(backToStart.notesAt(hole).isEmpty())
         assertFalse(backToStart.canUndo())
@@ -324,10 +342,13 @@ class GameTest {
             when (random.nextInt(4)) {
                 0 -> {
                     val digit = random.nextInt(1, 10)
-                    if (clues[index] == '0' && !(text[index].digitToInt() == digit && notes[index].isEmpty())) {
+                    val unchanged = text[index].digitToInt() == digit &&
+                        notes[index].isEmpty() &&
+                        !peerHasNote(notes, index, digit)
+                    if (clues[index] == '0' && !unchanged) {
                         past.addLast(text to notes)
                         text = text.replaceRange(index, index + 1, digit.toString())
-                        notes = notes.replaced(index, emptySet())
+                        notes = notes.clearedFor(index, digit)
                     }
                     game = game.enterDigit(index, digit)
                 }
@@ -342,9 +363,13 @@ class GameTest {
                 2 -> {
                     val digit = random.nextInt(1, 10)
                     if (clues[index] == '0' && text[index] == '0') {
-                        past.addLast(text to notes)
-                        val next = if (digit in notes[index]) notes[index] - digit else notes[index] + digit
-                        notes = notes.replaced(index, next)
+                        val removing = digit in notes[index]
+                        val blocked = !removing && digitIsOnBoard(text, index, digit)
+                        if (!blocked) {
+                            past.addLast(text to notes)
+                            val next = if (removing) notes[index] - digit else notes[index] + digit
+                            notes = notes.replaced(index, next)
+                        }
                     }
                     game = game.toggleNote(index, digit)
                 }
@@ -375,6 +400,78 @@ class GameTest {
         while (game.canUndo()) game = game.undo()
         assertEquals(puzzle.board.toText(), game.board.toText())
         for (cell in 0 until Board.CELL_COUNT) assertTrue(game.notesAt(cell).isEmpty())
+    }
+
+    @Test
+    fun placingANumberRemovesThatNoteFromTheSameRowAndUndoBringsItBack() {
+        val peer = (0 until Board.CELL_COUNT).first { cell ->
+            puzzle.board[cell] == 0 && freeDigits(cell).size >= 2 &&
+                (0 until Board.CELL_COUNT).any { it != cell && puzzle.board[it] == 0 && sees(cell, it) }
+        }
+        val hole = (0 until Board.CELL_COUNT).first { it != peer && puzzle.board[it] == 0 && sees(peer, it) }
+        val (digit, extra) = freeDigits(peer)
+        val noted = Game.start(puzzle).toggleNote(peer, digit).toggleNote(peer, extra)
+        assertEquals(setOf(digit, extra), noted.notesAt(peer))
+        val placed = noted.enterDigit(hole, digit)
+        assertEquals(setOf(extra), placed.notesAt(peer))
+        val cleared = placed.clearCell(hole)
+        assertEquals(setOf(extra), cleared.notesAt(peer))
+        assertEquals(setOf(extra), cleared.undo().notesAt(peer))
+        assertEquals(setOf(digit, extra), placed.undo().notesAt(peer))
+    }
+
+    @Test
+    fun aNoteOfANumberAlreadyOnTheBoardIsIgnored() {
+        val given = firstGiven()
+        val digit = puzzle.board[given]
+        val hole = holeThatSees(given)
+        val game = Game.start(puzzle).toggleNote(hole, digit)
+        assertTrue(game.notesAt(hole).isEmpty())
+        assertFalse(game.canUndo())
+        val allowed = (1..9).first { candidate ->
+            candidate != digit && (0 until Board.CELL_COUNT).none { sees(hole, it) && puzzle.board[it] == candidate }
+        }
+        val noted = game.toggleNote(hole, allowed)
+        assertEquals(setOf(allowed), noted.notesAt(hole))
+    }
+
+    private fun openCell(freeCount: Int): Int =
+        (0 until Board.CELL_COUNT).first { puzzle.board[it] == 0 && freeDigits(it).size >= freeCount }
+
+    private fun freeDigits(index: Int): List<Int> =
+        (1..9).filter { candidate ->
+            (0 until Board.CELL_COUNT).none { sees(index, it) && puzzle.board[it] == candidate }
+        }
+
+    private fun freeDigit(index: Int, except: Int = 0): Int =
+        freeDigits(index).first { it != except }
+
+    private fun holeThatSees(index: Int): Int =
+        (0 until Board.CELL_COUNT).first { it != index && puzzle.board[it] == 0 && sees(index, it) }
+
+    private fun sees(index: Int, other: Int): Boolean {
+        if (index == other) return false
+        val row = index / Board.SIZE
+        val column = index % Board.SIZE
+        val otherRow = other / Board.SIZE
+        val otherColumn = other % Board.SIZE
+        if (row == otherRow || column == otherColumn) return true
+        return row / Board.BOX == otherRow / Board.BOX && column / Board.BOX == otherColumn / Board.BOX
+    }
+
+    private fun peerHasNote(notes: List<Set<Int>>, index: Int, digit: Int): Boolean =
+        (0 until Board.CELL_COUNT).any { sees(index, it) && digit in notes[it] }
+
+    private fun digitIsOnBoard(text: String, index: Int, digit: Int): Boolean =
+        (0 until Board.CELL_COUNT).any { sees(index, it) && text[it].digitToInt() == digit }
+
+    private fun List<Set<Int>>.clearedFor(index: Int, digit: Int): List<Set<Int>> {
+        val next = toMutableList()
+        next[index] = emptySet()
+        for (other in 0 until Board.CELL_COUNT) {
+            if (sees(index, other) && digit in next[other]) next[other] = next[other] - digit
+        }
+        return next
     }
 
     private fun List<Set<Int>>.replaced(index: Int, notes: Set<Int>): List<Set<Int>> {
