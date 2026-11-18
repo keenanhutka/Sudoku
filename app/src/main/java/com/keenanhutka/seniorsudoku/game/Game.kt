@@ -82,9 +82,9 @@ class Game private constructor(
 
     companion object {
         fun start(puzzle: Puzzle): Game {
+            requireFinished(puzzle.solution)
             for (index in 0 until Board.CELL_COUNT) {
                 val clue = puzzle.board[index]
-                require(puzzle.solution[index] in 1..9) { "The solution has an empty cell." }
                 require(clue == 0 || clue == puzzle.solution[index]) {
                     "A clue does not match the solution."
                 }
@@ -97,6 +97,23 @@ class Game private constructor(
                 notes = List(Board.CELL_COUNT) { emptySet() },
                 history = emptyList(),
             )
+        }
+
+        private fun requireFinished(solution: Board) {
+            for (index in 0 until Board.CELL_COUNT) {
+                require(solution[index] in 1..9) { "The solution has an empty cell." }
+            }
+            for (house in 0 until Board.SIZE) {
+                require(solution.row(house).toSet().size == Board.SIZE) {
+                    "The solution repeats a number in a row."
+                }
+                require(solution.column(house).toSet().size == Board.SIZE) {
+                    "The solution repeats a number in a column."
+                }
+                require(solution.box(house).toSet().size == Board.SIZE) {
+                    "The solution repeats a number in a box."
+                }
+            }
         }
     }
 }

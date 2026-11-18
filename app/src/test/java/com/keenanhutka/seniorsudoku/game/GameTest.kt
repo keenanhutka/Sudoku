@@ -137,6 +137,46 @@ class GameTest {
     }
 
     @Test
+    fun aSolutionThatRepeatsANumberIsRejected() {
+        val holes = (0 until Board.CELL_COUNT).filter { puzzle.board[it] == 0 }
+        val left = holes.first()
+        val right = holes.first { it != left && it / Board.SIZE == left / Board.SIZE }
+        val bad = puzzle.copy(solution = puzzle.solution.withDigit(right, puzzle.solution[left]))
+        assertThrows(IllegalArgumentException::class.java) { Game.start(bad) }
+    }
+
+    @Test
+    fun followingHintsFinishesAnEasyGameAndUndoRestoresTheNote() {
+        val hole = firstHole()
+        var game = Game.start(puzzle).toggleNote(hole, 8)
+        assertEquals(setOf(8), game.notesAt(hole))
+        var holeOpen = true
+        var moves = 0
+        while (!game.isComplete()) {
+            val hint = findHint(game.board, game.solution)
+            assertTrue(hint is HintResult.Single)
+            val step = (hint as HintResult.Single).step
+            val index = (step.row - 1) * Board.SIZE + (step.column - 1)
+            assertEquals(0, game.board[index])
+            assertEquals(puzzle.solution[index], step.digit)
+            if (holeOpen && index != hole) assertEquals(setOf(8), game.notesAt(hole))
+            game = game.enterDigit(index, step.digit)
+            assertTrue(game.notesAt(index).isEmpty())
+            assertFalse(game.isWrong(index))
+            if (index == hole) holeOpen = false
+            moves++
+            assertTrue(moves <= Board.CELL_COUNT)
+        }
+        assertTrue(game.wrongCells().isEmpty())
+        repeat(moves) { game = game.undo() }
+        assertEquals(puzzle.board.toText(), game.board.toText())
+        assertEquals(setOf(8), game.notesAt(hole))
+        val backToStart = game.undo()
+        assertTrue(backToStart.notesAt(hole).isEmpty())
+        assertFalse(backToStart.canUndo())
+    }
+
+    @Test
     fun aSolutionWithAnEmptyCellIsRejected() {
         val hole = firstHole()
         val bad = puzzle.copy(solution = puzzle.solution.withDigit(hole, 0))
