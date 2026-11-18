@@ -421,6 +421,63 @@ class GameTest {
     }
 
     @Test
+    fun placingANumberRemovesThatNoteFromAColumnABoxAndNowhereElse() {
+        val (down, downPeer) = emptyPair { a, b -> a % Board.SIZE == b % Board.SIZE }
+        val (across, boxPeer) = emptyPair { a, b ->
+            a / Board.SIZE != b / Board.SIZE &&
+                a % Board.SIZE != b % Board.SIZE &&
+                boxId(a) == boxId(b) &&
+                freeDigits(b).size >= 2
+        }
+        assertNoteClearedOnlyForPeers(down, downPeer)
+        assertNoteClearedOnlyForPeers(across, boxPeer)
+
+        val (digit, nextDigit) = freeDigits(boxPeer)
+        val noted = Game.start(puzzle).toggleNote(boxPeer, digit).toggleNote(boxPeer, nextDigit)
+        val placed = noted.enterDigit(across, digit)
+        assertEquals(setOf(nextDigit), placed.notesAt(boxPeer))
+        val replaced = placed.enterDigit(across, nextDigit)
+        assertTrue(replaced.notesAt(boxPeer).isEmpty())
+        val after = replaced.toggleNote(boxPeer, digit)
+        assertEquals(nextDigit, after.board[across])
+        assertEquals(setOf(digit), after.notesAt(boxPeer))
+        val back = after.undo().undo()
+        assertEquals(digit, back.board[across])
+        assertEquals(setOf(nextDigit), back.notesAt(boxPeer))
+    }
+
+    private fun assertNoteClearedOnlyForPeers(cell: Int, peer: Int) {
+        val digit = freeDigits(peer).first()
+        val far = (0 until Board.CELL_COUNT).first {
+            it != cell && it != peer && puzzle.board[it] == 0 && boxId(it) != boxId(cell) &&
+                it / Board.SIZE != cell / Board.SIZE && it % Board.SIZE != cell % Board.SIZE &&
+                digit in freeDigits(it)
+        }
+        val noted = Game.start(puzzle).toggleNote(peer, digit).toggleNote(far, digit)
+        val placed = noted.enterDigit(cell, digit)
+        assertTrue(placed.notesAt(peer).isEmpty())
+        assertEquals(setOf(digit), placed.notesAt(far))
+        assertEquals(setOf(digit), placed.undo().notesAt(peer))
+    }
+
+    private fun emptyPair(accepts: (Int, Int) -> Boolean): Pair<Int, Int> {
+        for (a in 0 until Board.CELL_COUNT) {
+            if (puzzle.board[a] != 0) continue
+            for (b in 0 until Board.CELL_COUNT) {
+                if (a == b || puzzle.board[b] != 0 || freeDigits(b).isEmpty()) continue
+                if (accepts(a, b)) return a to b
+            }
+        }
+        error("This puzzle has no empty pair for the check.")
+    }
+
+    private fun boxId(index: Int): Int {
+        val row = index / Board.SIZE
+        val column = index % Board.SIZE
+        return (row / Board.BOX) * Board.BOX + column / Board.BOX
+    }
+
+    @Test
     fun aNoteOfANumberAlreadyOnTheBoardIsIgnored() {
         val given = firstGiven()
         val digit = puzzle.board[given]

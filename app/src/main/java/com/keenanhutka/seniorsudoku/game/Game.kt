@@ -45,7 +45,7 @@ class Game private constructor(
 
     fun canUndo(): Boolean = history.isNotEmpty()
 
-    /** Writes a digit in an empty or player-filled cell, and clears its notes. */
+    /** Writes a digit. Clears that cell's notes, and drops this digit from notes that can see it. */
     fun enterDigit(index: Int, digit: Int): Game {
         requireCell(index)
         require(digit in 1..9) { "A digit is 1 to 9." }
