@@ -45,7 +45,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Easy keeps 40 clues and needs no hidden single. Medium keeps 32 and needs 1 to 4. Hard keeps 28, needs 5 or more, and singles alone cannot finish it. The center clue is removed first so the count can land on that floor. A puzzle that misses its grade is thrown away.
 - Clues are removed in 180-degree pairs. The generator only shuffles a known finished grid. It does not invent one.
 - Today's puzzle is Medium, and the date picks the random choices. No network. February 29 is allowed only in a leap year. November 31 is rejected.
-- A note can be written only in an empty cell. Placing a number clears the notes in that cell, not in the rest of the row. Undo puts the notes back. A game will not start if the finished grid has an empty cell or a repeated number.
+- A note can be written only in an empty cell. Placing a number clears the notes in that cell, not in the rest of the row. Undo puts the notes back. The notes handed back are a copy. A game will not start if the finished grid has an empty cell or a repeated number.
 
 # Steps finished
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.

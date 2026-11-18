@@ -137,6 +137,42 @@ class GameTest {
     }
 
     @Test
+    fun changingTheNotesYouWereGivenDoesNotChangeTheGameOrUndo() {
+        val hole = firstHole()
+        val game = Game.start(puzzle).toggleNote(hole, 1).toggleNote(hole, 2)
+        val leaked = game.notesAt(hole) as MutableSet<Int>
+        leaked.add(3)
+        assertEquals(setOf(1, 2), game.notesAt(hole))
+        val next = game.toggleNote(hole, 4)
+        assertEquals(setOf(1, 2, 4), next.notesAt(hole))
+        assertEquals(setOf(1, 2), next.undo().notesAt(hole))
+    }
+
+    @Test
+    fun hintsFinishMediumButNotHard() {
+        for (level in listOf(Level.Medium, Level.Hard)) {
+            val made = newPuzzle(level, Random(3))
+            var game = Game.start(made)
+            var guard = 0
+            while (guard++ < Board.CELL_COUNT) {
+                val hint = findHint(game.board, game.solution) as? HintResult.Single ?: break
+                val index = (hint.step.row - 1) * Board.SIZE + (hint.step.column - 1)
+                assertEquals(0, game.board[index])
+                assertEquals(made.solution[index], hint.step.digit)
+                game = game.enterDigit(index, hint.step.digit)
+                assertFalse(game.isWrong(index))
+            }
+            assertTrue(game.wrongCells().isEmpty())
+            if (level == Level.Hard) {
+                assertFalse(game.isComplete())
+                assertTrue(game.board.toText().contains('0'))
+            } else {
+                assertTrue(game.isComplete())
+            }
+        }
+    }
+
+    @Test
     fun aSolutionThatRepeatsANumberIsRejected() {
         val holes = (0 until Board.CELL_COUNT).filter { puzzle.board[it] == 0 }
         val left = holes.first()

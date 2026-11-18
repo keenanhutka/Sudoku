@@ -13,12 +13,13 @@ class Game private constructor(
     val clues: Board,
     val solution: Board,
     val board: Board,
-    val notes: List<Set<Int>>,
+    private val notes: List<Set<Int>>,
     private val history: List<Moment>,
 ) {
     fun isGiven(index: Int): Boolean = clues[index] != 0
 
-    fun notesAt(index: Int): Set<Int> = notes[index]
+    /** A copy, so changing the set does not change this game or undo. */
+    fun notesAt(index: Int): Set<Int> = notes[index].toSet()
 
     /** A number the player wrote that is not the solution. */
     fun isWrong(index: Int): Boolean {
