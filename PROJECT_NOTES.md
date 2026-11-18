@@ -35,7 +35,7 @@ This can still change before the first Google Play upload. After that upload it 
 - app/src/test/.../BoardTest.kt: checks the solver.
 
 # Decisions
-- Working name is Senior Sudoku. The package is com.keenanhutka.seniorsudoku until Keenan says otherwise.
+- The app is always the light paper theme. Status and navigation icons stay dark, even when the phone is in dark mode.
 - compileSdk is 37, not 36. Google's current Compose BOM 2026.09.00 (Compose 1.12) requires compileSdk 37 and Android Gradle Plugin 9. targetSdk stays 36, which is the Play requirement. Source: https://developer.android.com/develop/ui/compose/setup-compose-dependencies-and-compiler
 - Android Gradle Plugin 9.5.0, Gradle 9.6.0, Kotlin 2.4.10. AGP 9 already includes Kotlin, so the separate Kotlin Android plugin is not applied. Source: https://kotlinlang.org/docs/compose-compiler-migration-guide.html
 - Libraries: Compose BOM 2026.09.00, Material 3 (from that BOM), activity-compose 1.13.0, lifecycle ViewModel Compose 2.11.0, lifecycle runtime Compose 2.11.0, core-ktx 1.19.1, DataStore Preferences 1.3.0, coroutines 1.11.0, JUnit 4.13.2.
