@@ -24,6 +24,8 @@ This can still change before the first Google Play upload. After that upload it 
 - engine/Solver.kt: finds whether a puzzle has one solution, and stops early.
 - engine/Singles.kt: the next naked or hidden single, in plain words, and a check for a wrong number.
 - engine/Generator.kt: makes an Easy, Medium, or Hard puzzle, and today's puzzle from the date.
+- game/Game.kt: one puzzle being played. Place a number, write a note, undo. Clues cannot change.
+- app/src/test/.../GameTest.kt: checks place, note, undo, a wrong number, and a finished grid.
 - app/src/test/.../GeneratorTest.kt: checks 20 puzzles of each level, and that today's puzzle stays the same.
 - app/src/test/.../SinglesTest.kt: checks those hints and prints a full explanation.
 - game/GamePackage.kt: placeholder for the game state.
@@ -43,6 +45,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Easy keeps 40 clues and needs no hidden single. Medium keeps 32 and needs 1 to 4. Hard keeps 28, needs 5 or more, and singles alone cannot finish it. The center clue is removed first so the count can land on that floor. A puzzle that misses its grade is thrown away.
 - Clues are removed in 180-degree pairs. The generator only shuffles a known finished grid. It does not invent one.
 - Today's puzzle is Medium, and the date picks the random choices. No network. February 29 is allowed only in a leap year. November 31 is rejected.
+- A note can be written only in an empty cell. Placing a number clears the notes in that cell, not in the rest of the row. Undo puts the notes back.
 
 # Steps finished
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.
@@ -50,9 +53,10 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 3, Nov 16 2026: the board and the solution counter. All 7 unit tests passed, and a debug app file builds.
 - Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
 - Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. Later checks rejected impossible dates, removed the center clue first, and compared every hint with a second reader that does not use bit masks. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
+- Step 6, Nov 17 2026: a game in progress. Place a number, write a note, undo. A clue cannot be changed. A wrong number is listed. Unit tests passed.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
 
 # Next step
-Step 6: a game in progress, so a number, a note, and undo can be remembered.
+Step 7: draw the board, big enough to tap.
