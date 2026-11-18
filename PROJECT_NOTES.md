@@ -49,7 +49,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 2, Nov 16 2026: SDK levels, libraries, six packages, and Git are set up. Ads and billing are not added.
 - Step 3, Nov 16 2026: the board and the solution counter. All 7 unit tests passed, and a debug app file builds.
 - Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
-- Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. A later check rejected impossible dates, and another check made sure the center clue is removed so the clue count lands on the floor. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
+- Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. Later checks rejected impossible dates, removed the center clue first, and compared every hint with a second reader that does not use bit masks. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.

@@ -25,10 +25,17 @@ class GeneratorQaTest {
                 var board = puzzle.board
                 val walk = solveWithSinglesOnly(board)
                 for (step in walk.steps) {
+                    assertEquals(plainNextStep(board), step)
+                    for (index in 0 until Board.CELL_COUNT) {
+                        if (board[index] != 0) continue
+                        assertEquals(
+                            plainCandidates(board, index),
+                            candidates(board, index).toSet(),
+                        )
+                    }
                     val index = (step.row - 1) * Board.SIZE + (step.column - 1)
                     assertEquals(0, board[index])
                     assertEquals(puzzle.solution[index], step.digit)
-                    assertTrue(step.digit in candidates(board, index))
                     board = board.withDigit(index, step.digit)
                 }
                 if (level == Level.Hard) {
@@ -183,5 +190,101 @@ class GeneratorQaTest {
 
         visit(0)
         return found
+    }
+
+    /** Candidates from row, column, and box sets. No bit masks. */
+    private fun plainCandidates(board: Board, index: Int): Set<Int> {
+        if (board[index] != 0) return emptySet()
+        val row = index / Board.SIZE
+        val column = index % Board.SIZE
+        val seen = HashSet<Int>()
+        for (other in 0 until Board.SIZE) {
+            val across = board[row, other]
+            val down = board[other, column]
+            if (across != 0) seen += across
+            if (down != 0) seen += down
+        }
+        val startRow = row / Board.BOX * Board.BOX
+        val startColumn = column / Board.BOX * Board.BOX
+        for (r in startRow until startRow + Board.BOX) {
+            for (c in startColumn until startColumn + Board.BOX) {
+                val digit = board[r, c]
+                if (digit != 0) seen += digit
+            }
+        }
+        return (1..9).filter { it !in seen }.toSet()
+    }
+
+    /** The hint the rules describe, written without the app's hint code. */
+    private fun plainNextStep(board: Board): HintStep? {
+        for (index in 0 until Board.CELL_COUNT) {
+            if (board[index] != 0) continue
+            val options = plainCandidates(board, index)
+            if (options.size == 1) {
+                val digit = options.first()
+                val row = index / Board.SIZE + 1
+                val column = index % Board.SIZE + 1
+                val article = if (digit == 8) "an" else "a"
+                return HintStep(
+                    technique = "Naked single",
+                    row = row,
+                    column = column,
+                    digit = digit,
+                    sentence = "Row $row, column $column can only be $article $digit, " +
+                        "because every other digit already appears in its row, column or box.",
+                )
+            }
+        }
+        val kinds = listOf("row", "column", "box")
+        for (kind in kinds) {
+            for (house in 0 until Board.SIZE) {
+                val cells = plainHouse(kind, house)
+                val placed = BooleanArray(10)
+                for (index in cells) {
+                    val digit = board[index]
+                    if (digit != 0) placed[digit] = true
+                }
+                for (digit in 1..9) {
+                    if (placed[digit]) continue
+                    val spots = cells.filter { board[it] == 0 && digit in plainCandidates(board, it) }
+                    if (spots.size != 1) continue
+                    val index = spots[0]
+                    val row = index / Board.SIZE + 1
+                    val column = index % Board.SIZE + 1
+                    val houseNumber = house + 1
+                    val sentence = when (kind) {
+                        "row" ->
+                            "In row $houseNumber, the digit $digit has only one place to go: column $column."
+                        "column" ->
+                            "In column $houseNumber, the digit $digit has only one place to go: row $row."
+                        else -> {
+                            val startRow = (house / Board.BOX) * Board.BOX + 1
+                            val startColumn = (house % Board.BOX) * Board.BOX + 1
+                            "In the box covering rows $startRow to ${startRow + 2} and columns " +
+                                "$startColumn to ${startColumn + 2}, the digit $digit has only one place to go: " +
+                                "row $row, column $column."
+                        }
+                    }
+                    return HintStep("Hidden single", row, column, digit, sentence)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun plainHouse(kind: String, house: Int): List<Int> = when (kind) {
+        "row" -> List(Board.SIZE) { column -> house * Board.SIZE + column }
+        "column" -> List(Board.SIZE) { row -> row * Board.SIZE + house }
+        else -> {
+            val startRow = (house / Board.BOX) * Board.BOX
+            val startColumn = (house % Board.BOX) * Board.BOX
+            buildList {
+                for (row in startRow until startRow + Board.BOX) {
+                    for (column in startColumn until startColumn + Board.BOX) {
+                        add(row * Board.SIZE + column)
+                    }
+                }
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.keenanhutka.seniorsudoku.engine
 
 import kotlin.random.Random
 
-/** Easy keeps at least 40 clues. Medium keeps 32. Hard keeps 28. */
+/** Easy has 40 clues. Medium has 32. Hard has 28. */
 enum class Level(val minimumClues: Int) {
     Easy(40),
     Medium(32),
