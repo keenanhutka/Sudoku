@@ -84,6 +84,7 @@ class Game private constructor(
         fun start(puzzle: Puzzle): Game {
             for (index in 0 until Board.CELL_COUNT) {
                 val clue = puzzle.board[index]
+                require(puzzle.solution[index] in 1..9) { "The solution has an empty cell." }
                 require(clue == 0 || clue == puzzle.solution[index]) {
                     "A clue does not match the solution."
                 }

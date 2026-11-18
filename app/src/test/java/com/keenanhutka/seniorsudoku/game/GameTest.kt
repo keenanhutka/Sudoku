@@ -1,7 +1,9 @@
 package com.keenanhutka.seniorsudoku.game
 
 import com.keenanhutka.seniorsudoku.engine.Board
+import com.keenanhutka.seniorsudoku.engine.HintResult
 import com.keenanhutka.seniorsudoku.engine.Level
+import com.keenanhutka.seniorsudoku.engine.findHint
 import com.keenanhutka.seniorsudoku.engine.newPuzzle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -132,6 +134,125 @@ class GameTest {
         val badDigit = otherDigit(given)
         val bad = puzzle.copy(board = puzzle.board.withDigit(given, badDigit))
         assertThrows(IllegalArgumentException::class.java) { Game.start(bad) }
+    }
+
+    @Test
+    fun aSolutionWithAnEmptyCellIsRejected() {
+        val hole = firstHole()
+        val bad = puzzle.copy(solution = puzzle.solution.withDigit(hole, 0))
+        assertThrows(IllegalArgumentException::class.java) { Game.start(bad) }
+    }
+
+    @Test
+    fun undoOnTheSameGameTwiceAgreesAndANewMoveDropsTheOtherBranch() {
+        val hole = firstHole()
+        val other = secondHole(hole)
+        val played = Game.start(puzzle).enterDigit(hole, otherDigit(hole))
+        val firstUndo = played.undo()
+        val secondUndo = played.undo()
+        assertEquals(firstUndo.board.toText(), secondUndo.board.toText())
+        assertFalse(firstUndo.canUndo())
+        val branched = firstUndo.enterDigit(other, puzzle.solution[other])
+        assertEquals(puzzle.solution[other], branched.board[other])
+        assertEquals(0, branched.board[hole])
+        val back = branched.undo()
+        assertEquals(0, back.board[other])
+        assertEquals(0, back.board[hole])
+        assertFalse(back.canUndo())
+    }
+
+    @Test
+    fun aWrongNumberBlocksAHintUntilItIsUndone() {
+        val game = Game.start(puzzle)
+        val hint = findHint(game.board, game.solution)
+        assertTrue(hint is HintResult.Single)
+        val step = (hint as HintResult.Single).step
+        val index = (step.row - 1) * Board.SIZE + (step.column - 1)
+        assertEquals(0, game.board[index])
+        assertEquals(puzzle.solution[index], step.digit)
+        val wrong = game.enterDigit(index, otherDigit(index))
+        assertTrue(findHint(wrong.board, wrong.solution) is HintResult.MistakeFound)
+        val fixed = wrong.enterDigit(index, step.digit)
+        assertFalse(fixed.isWrong(index))
+        val next = findHint(fixed.board, fixed.solution)
+        if (next is HintResult.Single) {
+            val nextIndex = (next.step.row - 1) * Board.SIZE + (next.step.column - 1)
+            assertEquals(puzzle.solution[nextIndex], next.step.digit)
+        }
+    }
+
+    @Test
+    fun randomMovesMatchASeparateRecord() {
+        val puzzle = newPuzzle(Level.Medium, Random(2))
+        var game = Game.start(puzzle)
+        val clues = game.clues.toText()
+        val solution = game.solution.toText()
+        var text = game.board.toText()
+        var notes = List(Board.CELL_COUNT) { emptySet<Int>() }
+        val past = ArrayDeque<Pair<String, List<Set<Int>>>>()
+        val random = Random(7)
+        repeat(50) {
+            val index = random.nextInt(Board.CELL_COUNT)
+            when (random.nextInt(4)) {
+                0 -> {
+                    val digit = random.nextInt(1, 10)
+                    if (clues[index] == '0' && !(text[index].digitToInt() == digit && notes[index].isEmpty())) {
+                        past.addLast(text to notes)
+                        text = text.replaceRange(index, index + 1, digit.toString())
+                        notes = notes.replaced(index, emptySet())
+                    }
+                    game = game.enterDigit(index, digit)
+                }
+                1 -> {
+                    if (clues[index] == '0' && (text[index] != '0' || notes[index].isNotEmpty())) {
+                        past.addLast(text to notes)
+                        text = text.replaceRange(index, index + 1, "0")
+                        notes = notes.replaced(index, emptySet())
+                    }
+                    game = game.clearCell(index)
+                }
+                2 -> {
+                    val digit = random.nextInt(1, 10)
+                    if (clues[index] == '0' && text[index] == '0') {
+                        past.addLast(text to notes)
+                        val next = if (digit in notes[index]) notes[index] - digit else notes[index] + digit
+                        notes = notes.replaced(index, next)
+                    }
+                    game = game.toggleNote(index, digit)
+                }
+                else -> {
+                    if (past.isNotEmpty()) {
+                        val previous = past.removeLast()
+                        text = previous.first
+                        notes = previous.second
+                    }
+                    game = game.undo()
+                }
+            }
+            assertEquals(text, game.board.toText())
+            assertEquals(clues, game.clues.toText())
+            assertEquals(solution, game.solution.toText())
+            assertEquals(past.isNotEmpty(), game.canUndo())
+            assertEquals(text == solution, game.isComplete())
+            val wrong = (0 until Board.CELL_COUNT).filter { cell ->
+                text[cell] != '0' && text[cell].digitToInt() != solution[cell].digitToInt()
+            }
+            assertEquals(wrong, game.wrongCells())
+            for (cell in 0 until Board.CELL_COUNT) {
+                assertEquals(notes[cell], game.notesAt(cell))
+                if (text[cell] != '0') assertTrue(game.notesAt(cell).isEmpty())
+                if (clues[cell] != '0') assertEquals(clues[cell], text[cell])
+            }
+        }
+        while (game.canUndo()) game = game.undo()
+        assertEquals(puzzle.board.toText(), game.board.toText())
+        for (cell in 0 until Board.CELL_COUNT) assertTrue(game.notesAt(cell).isEmpty())
+    }
+
+    private fun List<Set<Int>>.replaced(index: Int, notes: Set<Int>): List<Set<Int>> {
+        val copy = toMutableList()
+        copy[index] = notes
+        return copy
     }
 
     private fun firstGiven(): Int = (0 until Board.CELL_COUNT).first { puzzle.board[it] != 0 }
