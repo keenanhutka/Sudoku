@@ -173,6 +173,58 @@ class GameTest {
     }
 
     @Test
+    fun clearThenUndoThreeTimesRestoresTheNoteTheNumberAndTheStart() {
+        val hole = firstHole()
+        val noted = Game.start(puzzle).toggleNote(hole, 8)
+        val placed = noted.enterDigit(hole, otherDigit(hole))
+        val cleared = placed.clearCell(hole)
+        assertEquals(0, cleared.board[hole])
+        assertTrue(cleared.notesAt(hole).isEmpty())
+        val backToNumber = cleared.undo()
+        assertEquals(otherDigit(hole), backToNumber.board[hole])
+        assertTrue(backToNumber.notesAt(hole).isEmpty())
+        val backToNote = backToNumber.undo()
+        assertEquals(0, backToNote.board[hole])
+        assertEquals(setOf(8), backToNote.notesAt(hole))
+        val start = backToNote.undo()
+        assertTrue(start.notesAt(hole).isEmpty())
+        assertFalse(start.canUndo())
+        assertEquals(puzzle.board.toText(), start.board.toText())
+    }
+
+    @Test
+    fun aCorrectNumberThatIsNotTheFirstHintStillFinishesMedium() {
+        val made = newPuzzle(Level.Medium, Random(4))
+        val first = findHint(made.board, made.solution) as HintResult.Single
+        val hintIndex = (first.step.row - 1) * Board.SIZE + (first.step.column - 1)
+        val other = (0 until Board.CELL_COUNT).first { it != hintIndex && made.board[it] == 0 }
+        var game = Game.start(made).enterDigit(other, made.solution[other])
+        assertFalse(game.isWrong(other))
+        var guard = 0
+        while (!game.isComplete()) {
+            val hint = findHint(game.board, game.solution)
+            assertTrue(hint is HintResult.Single)
+            val step = (hint as HintResult.Single).step
+            val index = (step.row - 1) * Board.SIZE + (step.column - 1)
+            assertEquals(made.solution[index], step.digit)
+            game = game.enterDigit(index, step.digit)
+            assertTrue(++guard <= Board.CELL_COUNT)
+        }
+    }
+
+    @Test
+    fun aCellNumberOutsideTheBoardIsRejected() {
+        val game = Game.start(puzzle)
+        val hole = firstHole()
+        assertThrows(IllegalArgumentException::class.java) { game.notesAt(-1) }
+        assertThrows(IllegalArgumentException::class.java) { game.notesAt(Board.CELL_COUNT) }
+        assertThrows(IllegalArgumentException::class.java) { game.isWrong(Board.CELL_COUNT) }
+        assertThrows(IllegalArgumentException::class.java) { game.isGiven(-1) }
+        assertThrows(IllegalArgumentException::class.java) { game.enterDigit(hole, 0) }
+        assertThrows(IllegalArgumentException::class.java) { game.toggleNote(hole, 10) }
+    }
+
+    @Test
     fun aSolutionThatRepeatsANumberIsRejected() {
         val holes = (0 until Board.CELL_COUNT).filter { puzzle.board[it] == 0 }
         val left = holes.first()

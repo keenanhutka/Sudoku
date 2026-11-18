@@ -16,13 +16,20 @@ class Game private constructor(
     private val notes: List<Set<Int>>,
     private val history: List<Moment>,
 ) {
-    fun isGiven(index: Int): Boolean = clues[index] != 0
+    fun isGiven(index: Int): Boolean {
+        requireCell(index)
+        return clues[index] != 0
+    }
 
     /** A copy, so changing the set does not change this game or undo. */
-    fun notesAt(index: Int): Set<Int> = notes[index].toSet()
+    fun notesAt(index: Int): Set<Int> {
+        requireCell(index)
+        return notes[index].toSet()
+    }
 
     /** A number the player wrote that is not the solution. */
     fun isWrong(index: Int): Boolean {
+        requireCell(index)
         val digit = board[index]
         return digit != 0 && digit != solution[index]
     }
@@ -40,7 +47,7 @@ class Game private constructor(
 
     /** Writes a digit in an empty or player-filled cell, and clears its notes. */
     fun enterDigit(index: Int, digit: Int): Game {
-        require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
+        requireCell(index)
         require(digit in 1..9) { "A digit is 1 to 9." }
         if (isGiven(index)) return this
         if (board[index] == digit && notes[index].isEmpty()) return this
@@ -51,7 +58,7 @@ class Game private constructor(
 
     /** Erases a number or notes the player added. A clue stays. */
     fun clearCell(index: Int): Game {
-        require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
+        requireCell(index)
         if (isGiven(index)) return this
         if (board[index] == 0 && notes[index].isEmpty()) return this
         val nextNotes = notes.toMutableList()
@@ -61,7 +68,7 @@ class Game private constructor(
 
     /** A small note in an empty cell. Calling it again removes that note. */
     fun toggleNote(index: Int, digit: Int): Game {
-        require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
+        requireCell(index)
         require(digit in 1..9) { "A digit is 1 to 9." }
         if (isGiven(index) || board[index] != 0) return this
         val next = if (digit in notes[index]) notes[index] - digit else notes[index] + digit
@@ -77,6 +84,10 @@ class Game private constructor(
 
     private fun remember(board: Board, notes: List<Set<Int>>): Game {
         return Game(level, clues, solution, board, notes, history + Moment(this.board, this.notes))
+    }
+
+    private fun requireCell(index: Int) {
+        require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
     }
 
     private data class Moment(val board: Board, val notes: List<Set<Int>>)
