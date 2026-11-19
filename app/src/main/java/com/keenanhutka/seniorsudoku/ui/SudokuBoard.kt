@@ -15,17 +15,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.keenanhutka.seniorsudoku.engine.Board
@@ -53,28 +56,31 @@ fun SudokuBoard(
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
         val side = minOf(maxWidth, maxHeight)
         val cell = (side - ThickLine) / Board.SIZE
-        Box(Modifier.size(side)) {
-            GridLines(ink)
-            Column(Modifier.padding(ThickLine / 2).fillMaxSize()) {
-                for (row in 0 until Board.SIZE) {
-                    Row(Modifier.weight(1f).fillMaxWidth()) {
-                        for (column in 0 until Board.SIZE) {
-                            val index = row * Board.SIZE + column
-                            Square(
-                                game = game,
-                                index = index,
-                                selected = selected,
-                                cell = cell,
-                                ink = ink,
-                                entry = entry,
-                                wash = when {
-                                    selected == index -> selectedWash
-                                    selected != null && sees(selected, index) -> peerWash
-                                    else -> Color.Transparent
-                                },
-                                onSelect = onSelect,
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                            )
+        // Column 1 stays on the left even when the phone language is right to left.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Box(Modifier.size(side)) {
+                GridLines(ink)
+                Column(Modifier.padding(ThickLine / 2).fillMaxSize()) {
+                    for (row in 0 until Board.SIZE) {
+                        Row(Modifier.weight(1f).fillMaxWidth()) {
+                            for (column in 0 until Board.SIZE) {
+                                val index = row * Board.SIZE + column
+                                Square(
+                                    game = game,
+                                    index = index,
+                                    selected = selected,
+                                    cell = cell,
+                                    ink = ink,
+                                    entry = entry,
+                                    wash = when {
+                                        selected == index -> selectedWash
+                                        selected != null && sees(selected, index) -> peerWash
+                                        else -> Color.Transparent
+                                    },
+                                    onSelect = onSelect,
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                )
+                            }
                         }
                     }
                 }
@@ -94,9 +100,8 @@ private fun GridLines(ink: Color) {
         for (line in 0..Board.SIZE) {
             val at = inset + line * cell
             val stroke = if (line % Board.BOX == 0) thick else thin
-            val color = if (line % Board.BOX == 0) ink else ink.copy(alpha = 0.45f)
-            drawLine(color, Offset(at, inset), Offset(at, size.height - inset), stroke)
-            drawLine(color, Offset(inset, at), Offset(size.width - inset, at), stroke)
+            drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke)
+            drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke)
         }
     }
 }
