@@ -18,7 +18,9 @@ This can still change before the first Google Play upload. After that upload it 
 - app/build.gradle.kts: phone settings (SDK levels) and the libraries the app uses.
 - app/src/main/AndroidManifest.xml: the app name and the screen that opens first.
 - app/src/main/java/com/keenanhutka/seniorsudoku/MainActivity.kt: the Android entry screen.
-- ui/HomeScreen.kt: the words you see when the app opens.
+- ui/HomeScreen.kt: the words you see when the app opens, and the grid under them.
+- ui/SudokuBoard.kt: the 9 by 9 grid. A tap marks a square.
+- ui/CellLabel.kt: the words TalkBack reads for a square.
 - ui/Theme.kt: the paper colors.
 - engine/Board.kt: the 9 by 9 grid, with no Android code.
 - engine/Solver.kt: finds whether a puzzle has one solution, and stops early.
@@ -33,6 +35,7 @@ This can still change before the first Google Play upload. After that upload it 
 - ads/AdsPackage.kt: placeholder for the one ad.
 - billing/BillingPackage.kt: placeholder for the unlock.
 - app/src/test/.../BoardTest.kt: checks the solver.
+- app/src/test/.../CellLabelTest.kt: checks the words for a square, including a wrong number and notes.
 
 # Decisions
 - The app is always the light paper theme. Status icons stay dark even when the phone is in dark mode. Navigation icons stay dark on Android 8 and newer. On Android 7 the navigation bar is dark so its white icons can be seen.
@@ -54,9 +57,10 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
 - Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. Later checks rejected impossible dates, removed the center clue first, and compared every hint with a second reader that does not use bit masks. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
 - Step 6, Nov 17 2026: a game in progress. Place a number, write a note, undo. A clue cannot be changed. A wrong number is listed. Unit tests passed.
+- Step 7, Nov 18 2026: the grid is on the opening screen. Each square takes an equal share of the screen. A tap marks that square and names its row and column. Clues are dark. The grid does not place a number yet. Unit tests passed. Not yet run on a phone.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
 
 # Next step
-Step 7: draw the board, big enough to tap.
+Step 8: number keys, so the marked square can take a digit.
