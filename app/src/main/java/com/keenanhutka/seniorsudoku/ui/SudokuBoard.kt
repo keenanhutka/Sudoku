@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -100,8 +101,8 @@ private fun GridLines(ink: Color) {
         for (line in 0..Board.SIZE) {
             val at = inset + line * cell
             val stroke = if (line % Board.BOX == 0) thick else thin
-            drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke)
-            drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke)
+            drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke, StrokeCap.Square)
+            drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke, StrokeCap.Square)
         }
     }
 }
