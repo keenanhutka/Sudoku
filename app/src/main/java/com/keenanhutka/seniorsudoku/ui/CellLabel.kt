@@ -26,13 +26,20 @@ fun cellLabel(
 }
 
 /** The line under the title. Null means nothing is selected. */
-fun selectionLine(index: Int?, digit: Int, given: Boolean, wrong: Boolean): String {
+fun selectionLine(
+    index: Int?,
+    digit: Int,
+    given: Boolean,
+    wrong: Boolean,
+    notes: Set<Int> = emptySet(),
+): String {
     if (index == null) return "Tap a square."
     require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
     val row = index / Board.SIZE + 1
     val column = index % Board.SIZE + 1
     val where = "Row $row, column $column."
     return when {
+        digit == 0 && notes.isNotEmpty() -> "$where Notes ${notes.sorted().joinToString(", ")}."
         digit == 0 -> where
         given -> "$where Given $digit."
         wrong -> "$where $digit is wrong."

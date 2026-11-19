@@ -125,8 +125,10 @@ private fun Square(
         selected = selected == index,
     )
     val density = LocalDensity.current
-    val digitSize = with(density) { (cell.toPx() * 0.62f / density.fontScale).toSp() }
-    val noteSize = with(density) { (cell.toPx() * 0.22f / density.fontScale).toSp() }
+    // toSp already accounts for the system text size, so the digit stays
+    // the same share of the square when that setting is turned up.
+    val digitSize = with(density) { (cell.toPx() * 0.62f).toSp() }
+    val noteSize = with(density) { (cell.toPx() * 0.22f).toSp() }
     val digitColor = when {
         game.isWrong(index) -> WrongInk
         given -> ink

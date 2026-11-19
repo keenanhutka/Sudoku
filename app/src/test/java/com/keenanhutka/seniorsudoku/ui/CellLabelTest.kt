@@ -42,6 +42,7 @@ class CellLabelTest {
         assertEquals("Row 4, column 2.", selectionLine(28, 0, given = false, wrong = false))
         assertEquals("Row 4, column 2. Given 8.", selectionLine(28, 8, given = true, wrong = false))
         assertEquals("Row 4, column 2. 3 is wrong.", selectionLine(28, 3, given = false, wrong = true))
+        assertEquals("Row 4, column 2. Notes 1, 4.", selectionLine(28, 0, given = false, wrong = false, notes = setOf(4, 1)))
     }
 
     @Test

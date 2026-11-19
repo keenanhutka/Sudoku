@@ -52,6 +52,7 @@ fun HomeScreen() {
                     digit = digit,
                     given = selected?.let { game.isGiven(it) } == true,
                     wrong = selected?.let { game.isWrong(it) } == true,
+                    notes = selected?.let { game.notesAt(it) } ?: emptySet(),
                 ),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
