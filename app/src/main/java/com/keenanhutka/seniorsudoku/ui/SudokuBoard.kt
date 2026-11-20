@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +21,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.keenanhutka.seniorsudoku.engine.Board
 import com.keenanhutka.seniorsudoku.game.Game
+import kotlin.math.roundToInt
 
 private val ThickLine = 4.dp
 private val ThinLine = 1.5.dp
@@ -68,46 +70,106 @@ fun SudokuBoard(
                         drawGrid(ink)
                     },
             ) {
-                Column(Modifier.padding(ThickLine / 2).fillMaxSize()) {
-                    for (row in 0 until Board.SIZE) {
-                        Row(Modifier.weight(1f).fillMaxWidth()) {
-                            for (column in 0 until Board.SIZE) {
-                                val index = row * Board.SIZE + column
-                                Square(
-                                    game = game,
-                                    index = index,
-                                    selected = selected,
-                                    cell = cell,
-                                    ink = ink,
-                                    entry = entry,
-                                    wash = when {
-                                        selected == index -> selectedWash
-                                        selected != null && sees(selected, index) -> peerWash
-                                        else -> Color.Transparent
-                                    },
-                                    onSelect = onSelect,
-                                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                                )
-                            }
-                        }
-                    }
-                }
+                Squares(
+                    game = game,
+                    selected = selected,
+                    cell = cell,
+                    ink = ink,
+                    entry = entry,
+                    selectedWash = selectedWash,
+                    peerWash = peerWash,
+                    onSelect = onSelect,
+                )
             }
         }
     }
 }
 
 private fun DrawScope.drawGrid(ink: Color) {
-    val thick = ThickLine.toPx()
+    val boardPx = minOf(size.width, size.height).roundToInt()
+    val inset = (ThickLine / 2).roundToPx()
+    val edges = cellEdges(inset, cellSpans(boardPx, inset))
+    val thick = (inset * 2).toFloat()
     val thin = ThinLine.toPx()
-    val inset = thick / 2f
-    val span = size.width - thick
-    val cell = span / Board.SIZE
-    for (line in 0..Board.SIZE) {
-        val at = inset + line * cell
+    val start = edges.first().toFloat()
+    val end = edges.last().toFloat()
+    for (line in edges.indices) {
+        val at = edges[line].toFloat()
         val stroke = if (line % Board.BOX == 0) thick else thin
-        drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke, StrokeCap.Square)
-        drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke, StrokeCap.Square)
+        drawLine(ink, Offset(at, start), Offset(at, end), stroke, StrokeCap.Square)
+        drawLine(ink, Offset(start, at), Offset(end, at), stroke, StrokeCap.Square)
+    }
+}
+
+/** How many pixels each square gets. The leftovers are spread one pixel at a time. */
+internal fun cellSpans(boardPx: Int, insetPx: Int): IntArray {
+    val inner = (boardPx - insetPx * 2).coerceAtLeast(0)
+    val base = inner / Board.SIZE
+    val extra = inner % Board.SIZE
+    return IntArray(Board.SIZE) { index -> base + if (index < extra) 1 else 0 }
+}
+
+/** Pixel position of each line, including the outer border. */
+internal fun cellEdges(insetPx: Int, spans: IntArray): IntArray {
+    val edges = IntArray(spans.size + 1)
+    var at = insetPx
+    for (index in spans.indices) {
+        edges[index] = at
+        at += spans[index]
+    }
+    edges[spans.size] = at
+    return edges
+}
+
+@Composable
+private fun Squares(
+    game: Game,
+    selected: Int?,
+    cell: Dp,
+    ink: Color,
+    entry: Color,
+    selectedWash: Color,
+    peerWash: Color,
+    onSelect: (Int) -> Unit,
+) {
+    Layout(
+        modifier = Modifier.fillMaxSize(),
+        content = {
+            for (index in 0 until Board.CELL_COUNT) {
+                Square(
+                    game = game,
+                    index = index,
+                    selected = selected,
+                    cell = cell,
+                    ink = ink,
+                    entry = entry,
+                    wash = when {
+                        selected == index -> selectedWash
+                        selected != null && sees(selected, index) -> peerWash
+                        else -> Color.Transparent
+                    },
+                    onSelect = onSelect,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        },
+    ) { measurables, constraints ->
+        val boardPx = minOf(constraints.maxWidth, constraints.maxHeight)
+        val inset = (ThickLine / 2).roundToPx()
+        val spans = cellSpans(boardPx, inset)
+        val edges = cellEdges(inset, spans)
+        val placeables = measurables.mapIndexed { index, measurable ->
+            val row = index / Board.SIZE
+            val column = index % Board.SIZE
+            measurable.measure(Constraints.fixed(spans[column], spans[row]))
+        }
+        layout(boardPx, boardPx) {
+            placeables.forEachIndexed { index, placeable ->
+                val row = index / Board.SIZE
+                val column = index % Board.SIZE
+                placeable.place(edges[column], edges[row])
+            }
+        }
     }
 }
 
