@@ -90,7 +90,7 @@ private fun DrawScope.drawGrid(ink: Color) {
     val inset = (ThickLine / 2).roundToPx()
     val edges = cellEdges(inset, cellSpans(boardPx, inset))
     val thick = (inset * 2).toFloat()
-    val thin = ThinLine.toPx()
+    val thin = ThinLine.roundToPx().coerceAtLeast(1).toFloat()
     val start = edges.first().toFloat()
     val end = edges.last().toFloat()
     for (line in edges.indices) {
