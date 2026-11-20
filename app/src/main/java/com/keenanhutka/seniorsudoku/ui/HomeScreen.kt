@@ -32,6 +32,7 @@ import kotlin.random.Random
 /** The opening screen. Tap a square, then tap a number to write it. */
 @Composable
 fun HomeScreen() {
+    // Kept when the phone turns, so the numbers you typed are not wiped.
     var game by remember { mutableStateOf(Game.start(newPuzzle(Level.Easy, Random(1)))) }
     var selected by remember { mutableStateOf<Int?>(null) }
     val digit = selected?.let { game.board[it] } ?: 0
