@@ -18,6 +18,7 @@ class NumberKeyTest {
     fun theEnteredNumberIsNamed() {
         assertEquals("5", numberKeyLabel(5, entered = false))
         assertEquals("5, entered", numberKeyLabel(5, entered = true))
+        assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
     }
 
     @Test

@@ -41,9 +41,13 @@ private val WordText = 22.sp
 internal fun keysAcceptDigit(hasSelection: Boolean, given: Boolean): Boolean = hasSelection && !given
 
 /** What TalkBack reads for one number key. */
-internal fun numberKeyLabel(digit: Int, entered: Boolean): String {
+internal fun numberKeyLabel(digit: Int, entered: Boolean, wrong: Boolean = false): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
-    return if (entered) "$digit, entered" else digit.toString()
+    return when {
+        entered && wrong -> "$digit, wrong"
+        entered -> "$digit, entered"
+        else -> digit.toString()
+    }
 }
 
 private const val KEY_ROWS = 4
@@ -71,6 +75,7 @@ internal fun fittedKeyHeight(preferredPx: Int, spacePx: Int, gapPx: Int): Int {
 fun NumberKeys(
     enabled: Boolean,
     enteredDigit: Int,
+    enteredIsWrong: Boolean,
     onDigit: (Int) -> Unit,
     onErase: () -> Unit,
     modifier: Modifier = Modifier,
@@ -83,9 +88,9 @@ fun NumberKeys(
             modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, onDigit, height)
-            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, onDigit, height)
-            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, onDigit, height)
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, onDigit, height)
             WordKey(
                 text = "Erase",
                 enabled = enabled,
@@ -122,6 +127,7 @@ private fun DigitRow(
     digits: IntArray,
     enabled: Boolean,
     enteredDigit: Int,
+    enteredIsWrong: Boolean,
     onDigit: (Int) -> Unit,
     height: Dp,
 ) {
@@ -134,6 +140,7 @@ private fun DigitRow(
                 digit = digit,
                 enabled = enabled,
                 entered = enteredDigit == digit,
+                wrong = enteredDigit == digit && enteredIsWrong,
                 onClick = { onDigit(digit) },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -146,15 +153,17 @@ private fun DigitKey(
     digit: Int,
     enabled: Boolean,
     entered: Boolean,
+    wrong: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered),
+        description = numberKeyLabel(digit, entered, wrong),
         action = "Enter",
         enabled = enabled,
         entered = entered,
+        wrong = wrong,
         onClick = onClick,
         modifier = modifier,
         fontSize = DigitText,
@@ -174,6 +183,7 @@ private fun WordKey(
         action = text,
         enabled = enabled,
         entered = false,
+        wrong = false,
         onClick = onClick,
         modifier = modifier,
         fontSize = WordText,
@@ -187,13 +197,14 @@ private fun KeyFace(
     action: String,
     enabled: Boolean,
     entered: Boolean,
+    wrong: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
     fontSize: TextUnit,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val paper = MaterialTheme.colorScheme.background
-    val fill = MaterialTheme.colorScheme.primary
+    val fill = if (wrong) WrongInk else MaterialTheme.colorScheme.primary
     val onFill = MaterialTheme.colorScheme.onPrimary
     val borderColor = if (entered) fill else ink
     Box(

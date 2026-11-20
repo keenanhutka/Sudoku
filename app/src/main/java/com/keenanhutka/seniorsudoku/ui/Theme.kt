@@ -14,6 +14,9 @@ private val Paper = lightColorScheme(
     onPrimary = Color(0xFFF8F3EA),
 )
 
+/** A wrong digit. The same red in the square and on its number key. */
+internal val WrongInk = Color(0xFF8E2A2A)
+
 @Composable
 fun SeniorSudokuTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = Paper, content = content)

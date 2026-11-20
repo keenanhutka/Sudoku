@@ -40,7 +40,6 @@ import kotlin.math.roundToInt
 
 private val ThickLine = 4.dp
 private val ThinLine = 1.5.dp
-private val WrongInk = Color(0xFF8E2A2A)
 /** Darker than the marked-square wash, so a number you typed stays readable. */
 private val EntryInk = Color(0xFF6B4418)
 

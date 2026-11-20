@@ -37,6 +37,8 @@ fun HomeScreen() {
     var selected by remember { mutableStateOf<Int?>(null) }
     val digit = selected?.let { game.board[it] } ?: 0
     val given = selected?.let { game.isGiven(it) } == true
+    val wrong = selected?.let { game.isWrong(it) } == true
+    val notes = selected?.let { game.notesAt(it) } ?: emptySet()
     val accept = keysAcceptDigit(selected != null, given)
     val onDigit: (Int) -> Unit = onDigit@{ number ->
         val index = selected ?: return@onDigit
@@ -68,7 +70,7 @@ fun HomeScreen() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        ScreenHeader(selected, digit, given, game)
+                        ScreenHeader(selected, digit, given, wrong, notes)
                         SudokuBoard(
                             game = game,
                             selected = selected,
@@ -79,6 +81,7 @@ fun HomeScreen() {
                     NumberKeys(
                         enabled = accept,
                         enteredDigit = if (selected == null) 0 else digit,
+                        enteredIsWrong = wrong,
                         onDigit = onDigit,
                         onErase = onErase,
                         modifier = Modifier.width(minOf(screenWidth * 0.42f, 340.dp)).fillMaxHeight(),
@@ -91,7 +94,7 @@ fun HomeScreen() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ScreenHeader(selected, digit, given, game)
+                    ScreenHeader(selected, digit, given, wrong, notes)
                     SudokuBoard(
                         game = game,
                         selected = selected,
@@ -101,6 +104,7 @@ fun HomeScreen() {
                     NumberKeys(
                         enabled = accept,
                         enteredDigit = if (selected == null) 0 else digit,
+                        enteredIsWrong = wrong,
                         onDigit = onDigit,
                         onErase = onErase,
                         modifier = Modifier.fillMaxWidth(),
@@ -113,7 +117,7 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun ScreenHeader(selected: Int?, digit: Int, given: Boolean, game: Game) {
+private fun ScreenHeader(selected: Int?, digit: Int, given: Boolean, wrong: Boolean, notes: Set<Int>) {
     Text(
         text = "Senior Sudoku",
         style = MaterialTheme.typography.headlineMedium,
@@ -125,8 +129,8 @@ private fun ScreenHeader(selected: Int?, digit: Int, given: Boolean, game: Game)
             index = selected,
             digit = digit,
             given = given,
-            wrong = selected?.let { game.isWrong(it) } == true,
-            notes = selected?.let { game.notesAt(it) } ?: emptySet(),
+            wrong = wrong,
+            notes = notes,
         ),
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onBackground,
