@@ -49,7 +49,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Clues are removed in 180-degree pairs. The generator only shuffles a known finished grid. It does not invent one.
 - Today's puzzle is Medium, and the date picks the random choices. No network. February 29 is allowed only in a leap year. November 31 is rejected.
 - A note can be written only in an empty cell, and not for a number already in that row, column, or box. Placing a number clears that note everywhere in the same row, column, and box. Undo puts the notes back. The notes handed back are a copy. A game will not start if the finished grid has an empty cell or a repeated number.
-- The grid is left to right even when the phone language is not. Cell lines are the same dark ink as the numbers, and they stay on top of a marked square. Thickness alone marks a box. The lines and the squares share the same pixel edges, because 4dp is an odd number of pixels on some phones. The outer corners meet. TalkBack says Clear when that square is already marked.
+- The grid is left to right even when the phone language is not. Cell lines are the same dark ink as the numbers, and they stay on top of a marked square. Thickness alone marks a box. The lines and the squares share the same pixel edges, because 4dp is an odd number of pixels on some phones. Leftover pixels are spread so the three boxes stay the same size. The outer corners meet. TalkBack says Clear when that square is already marked.
 
 # Steps finished
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.

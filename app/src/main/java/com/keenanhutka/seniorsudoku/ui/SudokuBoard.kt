@@ -101,12 +101,14 @@ private fun DrawScope.drawGrid(ink: Color) {
     }
 }
 
-/** How many pixels each square gets. The leftovers are spread one pixel at a time. */
+/** How many pixels each square gets. Leftovers are spread so the three boxes stay equal. */
 internal fun cellSpans(boardPx: Int, insetPx: Int): IntArray {
     val inner = (boardPx - insetPx * 2).coerceAtLeast(0)
-    val base = inner / Board.SIZE
-    val extra = inner % Board.SIZE
-    return IntArray(Board.SIZE) { index -> base + if (index < extra) 1 else 0 }
+    return IntArray(Board.SIZE) { index ->
+        val end = (index + 1) * inner / Board.SIZE
+        val start = index * inner / Board.SIZE
+        end - start
+    }
 }
 
 /** Pixel position of each line, including the outer border. */

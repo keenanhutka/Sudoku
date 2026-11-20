@@ -24,6 +24,13 @@ class GridMetricsTest {
         val edges = cellEdges(inset, spans)
         assertEquals(inset, edges.first())
         assertEquals(board - inset, edges.last())
+        val boxes = intArrayOf(
+            spans[0] + spans[1] + spans[2],
+            spans[3] + spans[4] + spans[5],
+            spans[6] + spans[7] + spans[8],
+        )
+        assertEquals(boxes[0], boxes[1])
+        assertEquals(boxes[1], boxes[2])
         for (index in spans.indices) {
             assertEquals(spans[index], edges[index + 1] - edges[index])
         }
@@ -39,6 +46,12 @@ class GridMetricsTest {
                 assertEquals((board - inset * 2).coerceAtLeast(0), spans.sum())
                 assertTrue(spans.all { it >= 0 })
                 assertTrue(spans.max() - spans.min() <= 1)
+                val boxes = intArrayOf(
+                    spans[0] + spans[1] + spans[2],
+                    spans[3] + spans[4] + spans[5],
+                    spans[6] + spans[7] + spans[8],
+                )
+                assertTrue(boxes.max() - boxes.min() <= 1)
                 for (index in 0 until edges.lastIndex) {
                     assertTrue(edges[index + 1] >= edges[index])
                 }
