@@ -41,6 +41,8 @@ import kotlin.math.roundToInt
 private val ThickLine = 4.dp
 private val ThinLine = 1.5.dp
 private val WrongInk = Color(0xFF8E2A2A)
+/** Darker than the marked-square wash, so a number you typed stays readable. */
+private val EntryInk = Color(0xFF6B4418)
 
 /**
  * The 9 by 9 grid. Each square gets an equal share of the screen,
@@ -75,7 +77,6 @@ fun SudokuBoard(
                     selected = selected,
                     cell = cell,
                     ink = ink,
-                    entry = entry,
                     selectedWash = selectedWash,
                     peerWash = peerWash,
                     onSelect = onSelect,
@@ -129,7 +130,6 @@ private fun Squares(
     selected: Int?,
     cell: Dp,
     ink: Color,
-    entry: Color,
     selectedWash: Color,
     peerWash: Color,
     onSelect: (Int) -> Unit,
@@ -144,7 +144,6 @@ private fun Squares(
                     selected = selected,
                     cell = cell,
                     ink = ink,
-                    entry = entry,
                     wash = when {
                         selected == index -> selectedWash
                         selected != null && sees(selected, index) -> peerWash
@@ -182,7 +181,6 @@ private fun Square(
     selected: Int?,
     cell: Dp,
     ink: Color,
-    entry: Color,
     wash: Color,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -207,7 +205,7 @@ private fun Square(
     val digitColor = when {
         game.isWrong(index) -> WrongInk
         given -> ink
-        else -> entry
+        else -> EntryInk
     }
     Box(
         modifier = modifier
