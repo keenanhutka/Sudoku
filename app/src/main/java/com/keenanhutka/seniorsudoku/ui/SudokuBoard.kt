@@ -18,9 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalDensity
@@ -69,6 +72,7 @@ fun SudokuBoard(
                     .drawWithContent {
                         drawContent()
                         drawGrid(ink)
+                        if (selected != null) drawSelection(selected, ink)
                     },
             ) {
                 Squares(
@@ -99,6 +103,36 @@ private fun DrawScope.drawGrid(ink: Color) {
         drawLine(ink, Offset(at, start), Offset(at, end), stroke, StrokeCap.Square)
         drawLine(ink, Offset(start, at), Offset(end, at), stroke, StrokeCap.Square)
     }
+}
+
+/**
+ * The center line of the frame around a marked square.
+ * It sits just inside the thick grid line. Null when the square is too small.
+ */
+internal fun selectionFrame(edgeStart: Int, edgeEnd: Int, insetPx: Int, strokePx: Int): IntArray? {
+    if (strokePx <= 0 || edgeEnd <= edgeStart) return null
+    val pad = insetPx + strokePx / 2
+    val start = edgeStart + pad
+    val end = edgeEnd - pad
+    if (end <= start) return null
+    return intArrayOf(start, end)
+}
+
+private fun DrawScope.drawSelection(index: Int, ink: Color) {
+    val boardPx = minOf(size.width, size.height).roundToInt()
+    val inset = (ThickLine / 2).roundToPx()
+    val edges = cellEdges(inset, cellSpans(boardPx, inset))
+    val stroke = 2.dp.roundToPx().coerceAtLeast(2)
+    val row = index / Board.SIZE
+    val column = index % Board.SIZE
+    val horizontal = selectionFrame(edges[column], edges[column + 1], inset, stroke) ?: return
+    val vertical = selectionFrame(edges[row], edges[row + 1], inset, stroke) ?: return
+    drawRect(
+        color = ink,
+        topLeft = Offset(horizontal[0].toFloat(), vertical[0].toFloat()),
+        size = Size((horizontal[1] - horizontal[0]).toFloat(), (vertical[1] - vertical[0]).toFloat()),
+        style = Stroke(width = stroke.toFloat(), cap = StrokeCap.Square, join = StrokeJoin.Miter),
+    )
 }
 
 /** How many pixels each square gets. Leftovers are spread so the three boxes stay equal. */

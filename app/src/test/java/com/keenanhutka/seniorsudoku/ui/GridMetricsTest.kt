@@ -58,4 +58,20 @@ class GridMetricsTest {
             }
         }
     }
+
+    @Test
+    fun theSelectionFrameSitsInsideTheThickLineAndClearsTheDigit() {
+        val density = 2.8125f
+        val board = (368f * density).roundToInt()
+        val inset = (2f * density).roundToInt()
+        val stroke = (2f * density).roundToInt().coerceAtLeast(2)
+        val edges = cellEdges(inset, cellSpans(board, inset))
+        val frame = selectionFrame(edges[0], edges[1], inset, stroke) ?: error("The frame must fit.")
+        assertEquals(edges[0] + inset, frame[0] - stroke / 2)
+        assertEquals(edges[1] - inset, frame[1] + stroke / 2)
+        val span = edges[1] - edges[0]
+        val digit = (368f - 4f) * density / 9f * 0.62f
+        val clearance = (span - digit) / 2f
+        assertTrue(clearance > inset + stroke)
+    }
 }
