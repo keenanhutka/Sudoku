@@ -195,11 +195,7 @@ private fun KeyFace(
     val paper = MaterialTheme.colorScheme.background
     val fill = MaterialTheme.colorScheme.primary
     val onFill = MaterialTheme.colorScheme.onPrimary
-    val borderColor = when {
-        entered -> fill
-        enabled -> ink
-        else -> ink.copy(alpha = 0.35f)
-    }
+    val borderColor = if (entered) fill else ink
     Box(
         modifier
             .clip(KeyShape)
