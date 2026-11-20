@@ -1,6 +1,5 @@
 package com.keenanhutka.seniorsudoku.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,9 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -59,8 +60,14 @@ fun SudokuBoard(
         val cell = (side - ThickLine) / Board.SIZE
         // Column 1 stays on the left even when the phone language is right to left.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Box(Modifier.size(side)) {
-                GridLines(ink)
+            Box(
+                Modifier
+                    .size(side)
+                    .drawWithContent {
+                        drawContent()
+                        drawGrid(ink)
+                    },
+            ) {
                 Column(Modifier.padding(ThickLine / 2).fillMaxSize()) {
                     for (row in 0 until Board.SIZE) {
                         Row(Modifier.weight(1f).fillMaxWidth()) {
@@ -90,20 +97,17 @@ fun SudokuBoard(
     }
 }
 
-@Composable
-private fun GridLines(ink: Color) {
-    Canvas(Modifier.fillMaxSize()) {
-        val thick = ThickLine.toPx()
-        val thin = ThinLine.toPx()
-        val inset = thick / 2f
-        val span = size.width - thick
-        val cell = span / Board.SIZE
-        for (line in 0..Board.SIZE) {
-            val at = inset + line * cell
-            val stroke = if (line % Board.BOX == 0) thick else thin
-            drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke, StrokeCap.Square)
-            drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke, StrokeCap.Square)
-        }
+private fun DrawScope.drawGrid(ink: Color) {
+    val thick = ThickLine.toPx()
+    val thin = ThinLine.toPx()
+    val inset = thick / 2f
+    val span = size.width - thick
+    val cell = span / Board.SIZE
+    for (line in 0..Board.SIZE) {
+        val at = inset + line * cell
+        val stroke = if (line % Board.BOX == 0) thick else thin
+        drawLine(ink, Offset(at, inset), Offset(at, size.height - inset), stroke, StrokeCap.Square)
+        drawLine(ink, Offset(inset, at), Offset(size.width - inset, at), stroke, StrokeCap.Square)
     }
 }
 
@@ -122,13 +126,14 @@ private fun Square(
     val digit = game.board[index]
     val given = game.isGiven(index)
     val notes = game.notesAt(index)
+    val marked = selected == index
     val label = cellLabel(
         index = index,
         digit = digit,
         given = given,
         wrong = game.isWrong(index),
         notes = notes,
-        selected = selected == index,
+        selected = marked,
     )
     val density = LocalDensity.current
     // toSp already accounts for the system text size, so the digit stays
@@ -143,7 +148,7 @@ private fun Square(
     Box(
         modifier = modifier
             .background(wash)
-            .clickable(onClickLabel = "Select") { onSelect(index) }
+            .clickable(onClickLabel = selectionAction(marked)) { onSelect(index) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {

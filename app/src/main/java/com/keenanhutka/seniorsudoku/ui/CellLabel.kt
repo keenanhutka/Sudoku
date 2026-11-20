@@ -46,3 +46,6 @@ fun selectionLine(
         else -> "$where $digit."
     }
 }
+
+/** What TalkBack calls the tap. A second tap clears the mark. */
+fun selectionAction(selected: Boolean): String = if (selected) "Clear" else "Select"
