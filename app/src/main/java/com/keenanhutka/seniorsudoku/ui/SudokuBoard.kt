@@ -222,6 +222,7 @@ private fun Square(
                 modifier = Modifier.clearAndSetSemantics {},
                 color = digitColor,
                 fontSize = digitSize,
+                lineHeight = digitSize,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
@@ -248,6 +249,7 @@ private fun NoteGrid(notes: Set<Int>, fontSize: TextUnit, ink: Color) {
                                 modifier = Modifier.clearAndSetSemantics {},
                                 color = ink,
                                 fontSize = fontSize,
+                                lineHeight = fontSize,
                                 textAlign = TextAlign.Center,
                             )
                         }

@@ -58,7 +58,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 4, Nov 17 2026: singles-only hints. A sample puzzle finishes in 51 naked singles, and a separate grid produces the hidden-single sentence. A later check compared the hints with a second, simpler checker. No wrong digits. Unit tests passed.
 - Step 5, Nov 17 2026: the puzzle maker. Easy, Medium, Hard, and a daily puzzle that stays the same for the same date. Later checks rejected impossible dates, removed the center clue first, and compared every hint with a second reader that does not use bit masks. Every day of 2024 and 2026 makes a different puzzle. Unit tests passed.
 - Step 6, Nov 17 2026: a game in progress. Place a number, write a note, undo. A clue cannot be changed. A wrong number is listed. Unit tests passed.
-- Step 7, Nov 18 2026: the grid is on the opening screen. Each square takes an equal share of the screen. A tap marks that square and names its row and column. Clues are dark. The digit stays the same share of its square when the system text size is turned up. The grid does not place a number yet. Unit tests passed. Not yet run on a phone.
+- Step 7, Nov 18 2026: the grid is on the opening screen. Each square takes an equal share of the screen. A tap marks that square and names its row and column. Clues are dark. The digit stays the same share of its square when the system text size is turned up, and its line height does too, so the grid lines do not cut through it. The grid does not place a number yet. Unit tests passed. Not yet run on a phone.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
