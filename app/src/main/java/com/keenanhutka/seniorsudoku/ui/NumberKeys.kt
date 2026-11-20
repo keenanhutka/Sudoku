@@ -14,20 +14,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.max
+import kotlin.math.min
 
 private val KeyShape = RoundedCornerShape(8.dp)
 private val DigitText = 32.sp
@@ -42,6 +46,22 @@ internal fun numberKeyLabel(digit: Int, entered: Boolean): String {
     return if (entered) "$digit, entered" else digit.toString()
 }
 
+private const val KEY_ROWS = 4
+
+/**
+ * How tall one key is, in pixels.
+ * A short screen shrinks the keys so they cannot push the grid off.
+ */
+internal fun fittedKeyHeight(preferredPx: Int, spacePx: Int, gapPx: Int): Int {
+    require(preferredPx > 0) { "A key must be taller than nothing." }
+    require(gapPx >= 0) { "A gap cannot be negative." }
+    if (spacePx <= 0) return preferredPx
+    val gaps = gapPx * (KEY_ROWS - 1)
+    val fitted = (spacePx - gaps) / KEY_ROWS
+    if (fitted <= 0) return 1
+    return min(preferredPx, fitted)
+}
+
 /**
  * The 1 to 9 keys, plus Erase.
  * Three across, so the keys stay large and the same size. Erase has its own row
@@ -54,19 +74,38 @@ fun NumberKeys(
     onDigit: (Int) -> Unit,
     onErase: () -> Unit,
     modifier: Modifier = Modifier,
+    maxHeight: Dp? = null,
 ) {
-    val height = keyHeight()
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, onDigit, height)
-        DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, onDigit, height)
-        DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, onDigit, height)
-        WordKey(
-            text = "Erase",
-            enabled = enabled,
-            onClick = onErase,
-            modifier = Modifier.fillMaxWidth().height(height),
-        )
+    val height = fittedHeight(maxHeight)
+    // 1 stays on the left even when the phone language is right to left.
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Column(
+            modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+        ) {
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, onDigit, height)
+            WordKey(
+                text = "Erase",
+                enabled = enabled,
+                onClick = onErase,
+                modifier = Modifier.fillMaxWidth().height(height),
+            )
+        }
     }
+}
+
+/** Tall enough for the digit, and never taller than the space it was given. */
+@Composable
+private fun fittedHeight(maxHeight: Dp?): Dp {
+    val preferred = keyHeight()
+    val cap = maxHeight ?: return preferred
+    val density = LocalDensity.current
+    val px = with(density) {
+        fittedKeyHeight(preferred.roundToPx(), cap.roundToPx(), 8.dp.roundToPx())
+    }
+    return with(density) { px.toDp() }
 }
 
 /** Tall enough for the digit, and taller when the system text size is turned up. */

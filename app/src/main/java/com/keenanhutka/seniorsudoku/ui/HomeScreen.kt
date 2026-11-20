@@ -1,12 +1,16 @@
 package com.keenanhutka.seniorsudoku.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,53 +37,97 @@ fun HomeScreen() {
     val digit = selected?.let { game.board[it] } ?: 0
     val given = selected?.let { game.isGiven(it) } == true
     val accept = keysAcceptDigit(selected != null, given)
+    val onDigit: (Int) -> Unit = onDigit@{ number ->
+        val index = selected ?: return@onDigit
+        if (game.isGiven(index)) return@onDigit
+        game = game.enterDigit(index, number)
+    }
+    val onErase: () -> Unit = onErase@{
+        val index = selected ?: return@onErase
+        if (game.isGiven(index)) return@onErase
+        game = game.clearCell(index)
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
+        BoxWithConstraints(
+            Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = "Senior Sudoku",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                text = selectionLine(
-                    index = selected,
-                    digit = digit,
-                    given = given,
-                    wrong = selected?.let { game.isWrong(it) } == true,
-                    notes = selected?.let { game.notesAt(it) } ?: emptySet(),
-                ),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            SudokuBoard(
-                game = game,
-                selected = selected,
-                onSelect = { index -> selected = if (selected == index) null else index },
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            )
-            NumberKeys(
-                enabled = accept,
-                enteredDigit = if (selected == null) 0 else digit,
-                onDigit = { number ->
-                    val index = selected ?: return@NumberKeys
-                    if (game.isGiven(index)) return@NumberKeys
-                    game = game.enterDigit(index, number)
-                },
-                onErase = {
-                    val index = selected ?: return@NumberKeys
-                    if (game.isGiven(index)) return@NumberKeys
-                    game = game.clearCell(index)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            val sideways = maxWidth > maxHeight
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+            if (sideways) {
+                Row(
+                    Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Column(
+                        Modifier.weight(1f).fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        ScreenHeader(selected, digit, given, game)
+                        SudokuBoard(
+                            game = game,
+                            selected = selected,
+                            onSelect = { index -> selected = if (selected == index) null else index },
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                        )
+                    }
+                    NumberKeys(
+                        enabled = accept,
+                        enteredDigit = if (selected == null) 0 else digit,
+                        onDigit = onDigit,
+                        onErase = onErase,
+                        modifier = Modifier.width(minOf(screenWidth * 0.42f, 340.dp)).fillMaxHeight(),
+                        maxHeight = screenHeight,
+                    )
+                }
+            } else {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ScreenHeader(selected, digit, given, game)
+                    SudokuBoard(
+                        game = game,
+                        selected = selected,
+                        onSelect = { index -> selected = if (selected == index) null else index },
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                    )
+                    NumberKeys(
+                        enabled = accept,
+                        enteredDigit = if (selected == null) 0 else digit,
+                        onDigit = onDigit,
+                        onErase = onErase,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxHeight = (screenHeight - 280.dp).coerceAtLeast(48.dp),
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun ScreenHeader(selected: Int?, digit: Int, given: Boolean, game: Game) {
+    Text(
+        text = "Senior Sudoku",
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+    Text(
+        text = selectionLine(
+            index = selected,
+            digit = digit,
+            given = given,
+            wrong = selected?.let { game.isWrong(it) } == true,
+            notes = selected?.let { game.notesAt(it) } ?: emptySet(),
+        ),
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
 }

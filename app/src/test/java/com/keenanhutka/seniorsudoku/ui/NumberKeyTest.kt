@@ -24,4 +24,11 @@ class NumberKeyTest {
     fun aKeyRejectsANumberOutsideOneToNine() {
         assertThrows(IllegalArgumentException::class.java) { numberKeyLabel(0, entered = false) }
     }
+
+    @Test
+    fun aShortScreenShrinksTheKeysInsteadOfCoveringTheGrid() {
+        assertEquals(56, fittedKeyHeight(preferredPx = 56, spacePx = 800, gapPx = 8))
+        assertEquals(40, fittedKeyHeight(preferredPx = 56, spacePx = 184, gapPx = 8))
+        assertEquals(1, fittedKeyHeight(preferredPx = 56, spacePx = 10, gapPx = 8))
+    }
 }
