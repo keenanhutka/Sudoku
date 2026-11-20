@@ -25,12 +25,14 @@ import com.keenanhutka.seniorsudoku.engine.newPuzzle
 import com.keenanhutka.seniorsudoku.game.Game
 import kotlin.random.Random
 
-/** The opening screen. Tap a square to mark it. Numbers are a later step. */
+/** The opening screen. Tap a square, then tap a number to write it. */
 @Composable
 fun HomeScreen() {
-    val game = remember { Game.start(newPuzzle(Level.Easy, Random(1))) }
+    var game by remember { mutableStateOf(Game.start(newPuzzle(Level.Easy, Random(1)))) }
     var selected by remember { mutableStateOf<Int?>(null) }
     val digit = selected?.let { game.board[it] } ?: 0
+    val given = selected?.let { game.isGiven(it) } == true
+    val accept = keysAcceptDigit(selected != null, given)
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
@@ -50,7 +52,7 @@ fun HomeScreen() {
                 text = selectionLine(
                     index = selected,
                     digit = digit,
-                    given = selected?.let { game.isGiven(it) } == true,
+                    given = given,
                     wrong = selected?.let { game.isWrong(it) } == true,
                     notes = selected?.let { game.notesAt(it) } ?: emptySet(),
                 ),
@@ -62,6 +64,21 @@ fun HomeScreen() {
                 selected = selected,
                 onSelect = { index -> selected = if (selected == index) null else index },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
+            NumberKeys(
+                enabled = accept,
+                enteredDigit = if (selected == null) 0 else digit,
+                onDigit = { number ->
+                    val index = selected ?: return@NumberKeys
+                    if (game.isGiven(index)) return@NumberKeys
+                    game = game.enterDigit(index, number)
+                },
+                onErase = {
+                    val index = selected ?: return@NumberKeys
+                    if (game.isGiven(index)) return@NumberKeys
+                    game = game.clearCell(index)
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
