@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -273,7 +274,12 @@ private fun Square(
     // toSp already accounts for the system text size, so the digit stays
     // the same share of the square when that setting is turned up.
     val digitSize = with(density) { (cell.toPx() * 0.62f).toSp() }
-    val noteSize = with(density) { (cell.toPx() * 0.22f).toSp() }
+    // Notes sit inside the lines. A related square's frame is drawn on top, so the
+    // small digits use the space inside that frame, not the whole square.
+    val noteSize = with(density) {
+        val inner = (cell.toPx() - ThickLine.toPx() * 2f).coerceAtLeast(0f)
+        (inner / Board.BOX * 0.7f).toSp()
+    }
     val paper = MaterialTheme.colorScheme.background
     val digitColor = squareDigitColor(
         marked = marked,
@@ -308,7 +314,7 @@ private fun Square(
 
 @Composable
 private fun NoteGrid(notes: Set<Int>, fontSize: TextUnit, ink: Color) {
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().padding(ThickLine)) {
         for (row in 0 until Board.BOX) {
             Row(Modifier.weight(1f).fillMaxWidth()) {
                 for (column in 0 until Board.BOX) {
