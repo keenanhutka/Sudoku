@@ -72,7 +72,7 @@ fun SudokuBoard(
                     .drawWithContent {
                         drawContent()
                         drawGrid(ink)
-                        if (selected != null) drawSelection(selected, ink)
+                        if (selected != null) drawSelection(selected, EntryInk)
                     },
             ) {
                 Squares(
@@ -106,31 +106,39 @@ private fun DrawScope.drawGrid(ink: Color) {
 }
 
 /**
- * The center line of the frame around a marked square.
- * It sits just inside the thick grid line. Null when the square is too small.
+ * How far a grid line reaches into the square, in pixels.
+ * A box line reaches farther than a cell line.
  */
-internal fun selectionFrame(edgeStart: Int, edgeEnd: Int, insetPx: Int, strokePx: Int): IntArray? {
-    if (strokePx <= 0 || edgeEnd <= edgeStart) return null
-    val pad = insetPx + strokePx / 2
-    val start = edgeStart + pad
-    val end = edgeEnd - pad
-    if (end <= start) return null
-    return intArrayOf(start, end)
+internal fun lineHalfPx(line: Int, thickHalfPx: Int, thinPx: Int): Int {
+    val half = if (line % Board.BOX == 0) thickHalfPx else (thinPx + 1) / 2
+    return half.coerceAtLeast(0)
+}
+
+/**
+ * Center of one side of the selection frame.
+ * [inward] is 1 when the square is to the right or below the line, and -1 otherwise.
+ */
+internal fun frameCenter(edge: Int, inward: Int, lineHalfPx: Int, strokePx: Int): Int {
+    return edge + inward * (lineHalfPx + strokePx / 2)
 }
 
 private fun DrawScope.drawSelection(index: Int, ink: Color) {
     val boardPx = minOf(size.width, size.height).roundToInt()
     val inset = (ThickLine / 2).roundToPx()
     val edges = cellEdges(inset, cellSpans(boardPx, inset))
+    val thin = ThinLine.roundToPx().coerceAtLeast(1)
     val stroke = 2.dp.roundToPx().coerceAtLeast(2)
     val row = index / Board.SIZE
     val column = index % Board.SIZE
-    val horizontal = selectionFrame(edges[column], edges[column + 1], inset, stroke) ?: return
-    val vertical = selectionFrame(edges[row], edges[row + 1], inset, stroke) ?: return
+    val left = frameCenter(edges[column], 1, lineHalfPx(column, inset, thin), stroke)
+    val right = frameCenter(edges[column + 1], -1, lineHalfPx(column + 1, inset, thin), stroke)
+    val top = frameCenter(edges[row], 1, lineHalfPx(row, inset, thin), stroke)
+    val bottom = frameCenter(edges[row + 1], -1, lineHalfPx(row + 1, inset, thin), stroke)
+    if (right <= left || bottom <= top) return
     drawRect(
         color = ink,
-        topLeft = Offset(horizontal[0].toFloat(), vertical[0].toFloat()),
-        size = Size((horizontal[1] - horizontal[0]).toFloat(), (vertical[1] - vertical[0]).toFloat()),
+        topLeft = Offset(left.toFloat(), top.toFloat()),
+        size = Size((right - left).toFloat(), (bottom - top).toFloat()),
         style = Stroke(width = stroke.toFloat(), cap = StrokeCap.Square, join = StrokeJoin.Miter),
     )
 }

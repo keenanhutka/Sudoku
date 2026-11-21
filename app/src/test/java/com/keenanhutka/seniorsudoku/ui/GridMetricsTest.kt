@@ -60,15 +60,18 @@ class GridMetricsTest {
     }
 
     @Test
-    fun theSelectionFrameSitsInsideTheThickLineAndClearsTheDigit() {
+    fun theSelectionFrameMeetsBothTheThickLineAndTheThinLine() {
         val density = 2.8125f
         val board = (368f * density).roundToInt()
         val inset = (2f * density).roundToInt()
+        val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
         val stroke = (2f * density).roundToInt().coerceAtLeast(2)
         val edges = cellEdges(inset, cellSpans(board, inset))
-        val frame = selectionFrame(edges[0], edges[1], inset, stroke) ?: error("The frame must fit.")
-        assertEquals(edges[0] + inset, frame[0] - stroke / 2)
-        assertEquals(edges[1] - inset, frame[1] + stroke / 2)
+        // Square 0 is on the outer border and a thin line.
+        val left = frameCenter(edges[0], 1, lineHalfPx(0, inset, thin), stroke)
+        val right = frameCenter(edges[1], -1, lineHalfPx(1, inset, thin), stroke)
+        assertEquals(edges[0] + inset, left - stroke / 2)
+        assertEquals(edges[1] - (thin + 1) / 2, right + stroke / 2)
         val span = edges[1] - edges[0]
         val digit = (368f - 4f) * density / 9f * 0.62f
         val clearance = (span - digit) / 2f
