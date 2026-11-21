@@ -1,5 +1,6 @@
 package com.keenanhutka.seniorsudoku.ui
 
+import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -91,5 +92,21 @@ class GridMetricsTest {
         val edge = 40
         val center = frameCenter(edge, 1, lineHalfPx(1, inset, thin), peer)
         assertEquals(edge + (thin + 1) / 2, center - peer / 2)
+    }
+
+    @Test
+    fun aMarkedSquareIsSolidAndItsDigitStaysReadable() {
+        val paper = Color(0xFFF4EFE4)
+        val ink = Color(0xFF1C1812)
+        val fill = squareFill(marked = true, wrong = false, peer = false, peerWash = Color.Transparent)
+        val digit = squareDigitColor(marked = true, wrong = false, given = true, paper = paper, ink = ink)
+        assertEquals(paper, digit)
+        assertNotEquals(fill, digit)
+        assertNotEquals(Color.Transparent, fill)
+        val wrongFill = squareFill(marked = true, wrong = true, peer = false, peerWash = Color.Transparent)
+        val wrongDigit = squareDigitColor(marked = true, wrong = true, given = false, paper = paper, ink = ink)
+        assertEquals(paper, wrongDigit)
+        assertNotEquals(wrongFill, fill)
+        assertNotEquals(wrongFill, wrongDigit)
     }
 }

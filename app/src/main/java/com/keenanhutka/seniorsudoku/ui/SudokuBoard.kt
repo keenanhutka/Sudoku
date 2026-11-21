@@ -58,9 +58,7 @@ fun SudokuBoard(
     modifier: Modifier = Modifier,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
-    val entry = MaterialTheme.colorScheme.primary
-    val selectedWash = entry.copy(alpha = 0.28f)
-    val peerWash = entry.copy(alpha = 0.12f)
+    val peerWash = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
         val side = minOf(maxWidth, maxHeight)
         val cell = (side - ThickLine) / Board.SIZE
@@ -72,10 +70,7 @@ fun SudokuBoard(
                     .drawWithContent {
                         drawContent()
                         drawGrid(ink)
-                        if (selected != null) {
-                            drawPeers(selected, EntryInk)
-                            drawSelection(selected, ink)
-                        }
+                        if (selected != null) drawPeers(selected, EntryInk)
                     },
             ) {
                 Squares(
@@ -83,7 +78,6 @@ fun SudokuBoard(
                     selected = selected,
                     cell = cell,
                     ink = ink,
-                    selectedWash = selectedWash,
                     peerWash = peerWash,
                     onSelect = onSelect,
                 )
@@ -129,10 +123,6 @@ internal fun frameCenter(edge: Int, inward: Int, lineHalfPx: Int, strokePx: Int)
 internal fun sharpStroke(px: Int): Int {
     val width = px.coerceAtLeast(2)
     return if (width % 2 == 0) width else width + 1
-}
-
-private fun DrawScope.drawSelection(index: Int, color: Color) {
-    drawCellFrame(index, sharpStroke(2.dp.roundToPx()), color)
 }
 
 private fun DrawScope.drawPeers(index: Int, color: Color) {
@@ -184,13 +174,34 @@ internal fun cellEdges(insetPx: Int, spans: IntArray): IntArray {
     return edges
 }
 
+/** The marked square is solid, so it cannot blend into the grid lines. */
+internal fun squareFill(marked: Boolean, wrong: Boolean, peer: Boolean, peerWash: Color): Color = when {
+    marked && wrong -> WrongInk
+    marked -> EntryInk
+    peer -> peerWash
+    else -> Color.Transparent
+}
+
+/** A digit on a solid marked square is paper-colored, so it stays readable. */
+internal fun squareDigitColor(
+    marked: Boolean,
+    wrong: Boolean,
+    given: Boolean,
+    paper: Color,
+    ink: Color,
+): Color = when {
+    marked -> paper
+    wrong -> WrongInk
+    given -> ink
+    else -> EntryInk
+}
+
 @Composable
 private fun Squares(
     game: Game,
     selected: Int?,
     cell: Dp,
     ink: Color,
-    selectedWash: Color,
     peerWash: Color,
     onSelect: (Int) -> Unit,
 ) {
@@ -204,11 +215,12 @@ private fun Squares(
                     selected = selected,
                     cell = cell,
                     ink = ink,
-                    wash = when {
-                        selected == index -> selectedWash
-                        selected != null && sees(selected, index) -> peerWash
-                        else -> Color.Transparent
-                    },
+                    wash = squareFill(
+                        marked = selected == index,
+                        wrong = game.isWrong(index),
+                        peer = selected != null && sees(selected, index),
+                        peerWash = peerWash,
+                    ),
                     onSelect = onSelect,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -262,11 +274,15 @@ private fun Square(
     // the same share of the square when that setting is turned up.
     val digitSize = with(density) { (cell.toPx() * 0.62f).toSp() }
     val noteSize = with(density) { (cell.toPx() * 0.22f).toSp() }
-    val digitColor = when {
-        game.isWrong(index) -> WrongInk
-        given -> ink
-        else -> EntryInk
-    }
+    val paper = MaterialTheme.colorScheme.background
+    val digitColor = squareDigitColor(
+        marked = marked,
+        wrong = game.isWrong(index),
+        given = given,
+        paper = paper,
+        ink = ink,
+    )
+    val noteColor = if (marked) paper else ink
     Box(
         modifier = modifier
             .background(wash)
@@ -285,7 +301,7 @@ private fun Square(
                 textAlign = TextAlign.Center,
             )
         } else if (notes.isNotEmpty()) {
-            NoteGrid(notes, noteSize, ink)
+            NoteGrid(notes, noteSize, noteColor)
         }
     }
 }
