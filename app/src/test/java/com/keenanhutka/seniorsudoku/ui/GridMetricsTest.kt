@@ -65,7 +65,7 @@ class GridMetricsTest {
         val board = (368f * density).roundToInt()
         val inset = (2f * density).roundToInt()
         val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
-        val stroke = (2f * density).roundToInt().coerceAtLeast(2)
+        val stroke = sharpStroke((2f * density).roundToInt())
         val edges = cellEdges(inset, cellSpans(board, inset))
         // Square 0 is on the outer border and a thin line.
         val left = frameCenter(edges[0], 1, lineHalfPx(0, inset, thin), stroke)
@@ -83,8 +83,10 @@ class GridMetricsTest {
         val density = 2.8125f
         val inset = (2f * density).roundToInt()
         val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
-        val peer = (1f * density).roundToInt().coerceAtLeast(2)
-        val marked = (2f * density).roundToInt().coerceAtLeast(2)
+        val peer = sharpStroke((1f * density).roundToInt())
+        val marked = sharpStroke((2f * density).roundToInt())
+        assertEquals(0, peer % 2)
+        assertEquals(0, marked % 2)
         assertTrue(peer < marked)
         val edge = 40
         val center = frameCenter(edge, 1, lineHalfPx(1, inset, thin), peer)

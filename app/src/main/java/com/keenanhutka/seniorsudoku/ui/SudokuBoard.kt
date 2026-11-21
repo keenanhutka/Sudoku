@@ -125,12 +125,18 @@ internal fun frameCenter(edge: Int, inward: Int, lineHalfPx: Int, strokePx: Int)
     return edge + inward * (lineHalfPx + strokePx / 2)
 }
 
+/** An even pixel width, so a frame sits on whole pixels and does not look blurry. */
+internal fun sharpStroke(px: Int): Int {
+    val width = px.coerceAtLeast(2)
+    return if (width % 2 == 0) width else width + 1
+}
+
 private fun DrawScope.drawSelection(index: Int, color: Color) {
-    drawCellFrame(index, 2.dp.roundToPx().coerceAtLeast(2), color)
+    drawCellFrame(index, sharpStroke(2.dp.roundToPx()), color)
 }
 
 private fun DrawScope.drawPeers(index: Int, color: Color) {
-    val stroke = 1.dp.roundToPx().coerceAtLeast(2)
+    val stroke = sharpStroke(1.dp.roundToPx())
     for (other in 0 until Board.CELL_COUNT) {
         if (sees(index, other)) drawCellFrame(other, stroke, color)
     }
