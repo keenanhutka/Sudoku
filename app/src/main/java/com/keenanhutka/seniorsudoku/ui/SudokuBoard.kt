@@ -91,7 +91,7 @@ private fun DrawScope.drawGrid(ink: Color) {
     val inset = (ThickLine / 2).roundToPx()
     val edges = cellEdges(inset, cellSpans(boardPx, inset))
     val thick = (inset * 2).toFloat()
-    val thin = ThinLine.roundToPx().coerceAtLeast(1).toFloat()
+    val thin = sharpStroke(ThinLine.roundToPx()).toFloat()
     val start = edges.first().toFloat()
     val end = edges.last().toFloat()
     for (line in edges.indices) {
@@ -136,7 +136,7 @@ private fun DrawScope.drawCellFrame(index: Int, stroke: Int, color: Color) {
     val boardPx = minOf(size.width, size.height).roundToInt()
     val inset = (ThickLine / 2).roundToPx()
     val edges = cellEdges(inset, cellSpans(boardPx, inset))
-    val thin = ThinLine.roundToPx().coerceAtLeast(1)
+    val thin = sharpStroke(ThinLine.roundToPx())
     val row = index / Board.SIZE
     val column = index % Board.SIZE
     val left = frameCenter(edges[column], 1, lineHalfPx(column, inset, thin), stroke)

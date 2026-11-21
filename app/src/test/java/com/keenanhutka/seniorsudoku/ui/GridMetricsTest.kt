@@ -65,7 +65,7 @@ class GridMetricsTest {
         val density = 2.8125f
         val board = (368f * density).roundToInt()
         val inset = (2f * density).roundToInt()
-        val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
+        val thin = sharpStroke((1.5f * density).roundToInt())
         val stroke = sharpStroke((2f * density).roundToInt())
         val edges = cellEdges(inset, cellSpans(board, inset))
         // Square 0 is on the outer border and a thin line.
@@ -83,7 +83,7 @@ class GridMetricsTest {
     fun aRelatedSquareFrameMeetsTheLineAndStaysThinner() {
         val density = 2.8125f
         val inset = (2f * density).roundToInt()
-        val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
+        val thin = sharpStroke((1.5f * density).roundToInt())
         val peer = sharpStroke((1f * density).roundToInt())
         val marked = sharpStroke((2f * density).roundToInt())
         assertEquals(0, peer % 2)
@@ -92,6 +92,19 @@ class GridMetricsTest {
         val edge = 40
         val center = frameCenter(edge, 1, lineHalfPx(1, inset, thin), peer)
         assertEquals(edge + (thin + 1) / 2, center - peer / 2)
+    }
+
+    @Test
+    fun aThinLineIsAnEvenNumberOfPixelsOnThisPhone() {
+        val density = 3f
+        val thin = sharpStroke((1.5f * density).roundToInt())
+        assertEquals(6, thin)
+        assertEquals(0, thin % 2)
+        val inset = (2f * density).roundToInt()
+        val peer = sharpStroke((1f * density).roundToInt())
+        val edge = 40
+        val center = frameCenter(edge, 1, lineHalfPx(1, inset, thin), peer)
+        assertEquals(edge + thin / 2, center - peer / 2)
     }
 
     @Test
