@@ -74,7 +74,7 @@ fun SudokuBoard(
                         drawGrid(ink)
                         if (selected != null) {
                             drawPeers(selected, EntryInk)
-                            drawSelection(selected, EntryInk)
+                            drawSelection(selected, ink)
                         }
                     },
             ) {
