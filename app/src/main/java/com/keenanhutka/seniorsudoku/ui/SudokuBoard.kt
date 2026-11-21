@@ -72,7 +72,10 @@ fun SudokuBoard(
                     .drawWithContent {
                         drawContent()
                         drawGrid(ink)
-                        if (selected != null) drawSelection(selected, EntryInk)
+                        if (selected != null) {
+                            drawPeers(selected, EntryInk)
+                            drawSelection(selected, EntryInk)
+                        }
                     },
             ) {
                 Squares(
@@ -122,12 +125,22 @@ internal fun frameCenter(edge: Int, inward: Int, lineHalfPx: Int, strokePx: Int)
     return edge + inward * (lineHalfPx + strokePx / 2)
 }
 
-private fun DrawScope.drawSelection(index: Int, ink: Color) {
+private fun DrawScope.drawSelection(index: Int, color: Color) {
+    drawCellFrame(index, 2.dp.roundToPx().coerceAtLeast(2), color)
+}
+
+private fun DrawScope.drawPeers(index: Int, color: Color) {
+    val stroke = 1.dp.roundToPx().coerceAtLeast(2)
+    for (other in 0 until Board.CELL_COUNT) {
+        if (sees(index, other)) drawCellFrame(other, stroke, color)
+    }
+}
+
+private fun DrawScope.drawCellFrame(index: Int, stroke: Int, color: Color) {
     val boardPx = minOf(size.width, size.height).roundToInt()
     val inset = (ThickLine / 2).roundToPx()
     val edges = cellEdges(inset, cellSpans(boardPx, inset))
     val thin = ThinLine.roundToPx().coerceAtLeast(1)
-    val stroke = 2.dp.roundToPx().coerceAtLeast(2)
     val row = index / Board.SIZE
     val column = index % Board.SIZE
     val left = frameCenter(edges[column], 1, lineHalfPx(column, inset, thin), stroke)
@@ -136,7 +149,7 @@ private fun DrawScope.drawSelection(index: Int, ink: Color) {
     val bottom = frameCenter(edges[row + 1], -1, lineHalfPx(row + 1, inset, thin), stroke)
     if (right <= left || bottom <= top) return
     drawRect(
-        color = ink,
+        color = color,
         topLeft = Offset(left.toFloat(), top.toFloat()),
         size = Size((right - left).toFloat(), (bottom - top).toFloat()),
         style = Stroke(width = stroke.toFloat(), cap = StrokeCap.Square, join = StrokeJoin.Miter),

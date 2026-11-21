@@ -77,4 +77,17 @@ class GridMetricsTest {
         val clearance = (span - digit) / 2f
         assertTrue(clearance > inset + stroke)
     }
+
+    @Test
+    fun aRelatedSquareFrameMeetsTheLineAndStaysThinner() {
+        val density = 2.8125f
+        val inset = (2f * density).roundToInt()
+        val thin = (1.5f * density).roundToInt().coerceAtLeast(1)
+        val peer = (1f * density).roundToInt().coerceAtLeast(2)
+        val marked = (2f * density).roundToInt().coerceAtLeast(2)
+        assertTrue(peer < marked)
+        val edge = 40
+        val center = frameCenter(edge, 1, lineHalfPx(1, inset, thin), peer)
+        assertEquals(edge + (thin + 1) / 2, center - peer / 2)
+    }
 }
