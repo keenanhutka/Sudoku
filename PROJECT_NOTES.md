@@ -18,10 +18,10 @@ This can still change before the first Google Play upload. After that upload it 
 - app/build.gradle.kts: phone settings (SDK levels) and the libraries the app uses.
 - app/src/main/AndroidManifest.xml: the app name and the screen that opens first.
 - app/src/main/java/com/keenanhutka/seniorsudoku/MainActivity.kt: the Android entry screen.
-- ui/HomeScreen.kt: the words you see when the app opens, the grid, and the number keys.
+- ui/HomeScreen.kt: the words you see when the app opens, the grid, the number keys, Notes, Undo, Check my numbers, and the Well done screen.
 - ui/SudokuBoard.kt: the 9 by 9 grid. A tap marks a square.
 - ui/NumberKeys.kt: the 1 to 9 keys and Erase. A clue cannot be changed.
-- ui/CellLabel.kt: the words TalkBack reads for a square.
+- ui/CellLabel.kt: the words TalkBack reads for a square, and the Check my numbers sentence.
 - ui/Theme.kt: the paper colors.
 - engine/Board.kt: the 9 by 9 grid, with no Android code.
 - engine/Solver.kt: finds whether a puzzle has one solution, and stops early.
@@ -51,7 +51,7 @@ This can still change before the first Google Play upload. After that upload it 
 - Clues are removed in 180-degree pairs. The generator only shuffles a known finished grid. It does not invent one.
 - Today's puzzle is Medium, and the date picks the random choices. No network. February 29 is allowed only in a leap year. November 31 is rejected.
 - A note can be written only in an empty cell, and not for a number already in that row, column, or box. Placing a number clears that note everywhere in the same row, column, and box. Undo puts the notes back. The notes handed back are a copy. A game will not start if the finished grid has an empty cell or a repeated number.
-- The grid is left to right even when the phone language is not. The number keys are too. Cell lines are the same dark ink as the numbers, and they stay on top of a marked square. A marked square is filled solid brown, or solid red when its number is wrong, so it does not blend into the grid lines. Its number is paper-colored, so it stays readable. The squares in its row, column, and box have a thinner brown frame. Those frames are an even number of pixels, so they are not blurry. A number you typed is brown until that square is marked. A wrong number is red in the square and on its key, and the marked square itself turns red. Thickness alone marks a box. The lines and the squares share the same pixel edges, because 4dp is an odd number of pixels on some phones. Leftover pixels are spread so the three boxes stay the same size. The thin lines are an even number of pixels, so they are not blurry. The outer corners meet. TalkBack says Clear when that square is already marked. A number key is read once, not twice. A key that is waiting keeps a dark border, so it does not fade into the paper. The keys grow with the system text size so a digit is not cut off, and they shrink on a short screen so the grid stays on screen. Turned sideways, the keys sit beside the grid. Turning the phone, or changing the text size, does not wipe the numbers you typed. Erase is its own row so the word stays whole.
+- The grid is left to right even when the phone language is not. The number keys are too. Cell lines are the same dark ink as the numbers, and they stay on top of a marked square. A marked square is filled solid brown, or solid red when its number is wrong, so it does not blend into the grid lines. Its number is paper-colored, so it stays readable. The squares in its row, column, and box have a thinner brown frame. Those frames are an even number of pixels, so they are not blurry. A number you typed is brown until that square is marked. A wrong number is red in the square and on its key, and the marked square itself turns red. Thickness alone marks a box. The lines and the squares share the same pixel edges, because 4dp is an odd number of pixels on some phones. Leftover pixels are spread so the three boxes stay the same size. The thin lines are an even number of pixels, so they are not blurry. The outer corners meet. TalkBack says Clear when that square is already marked. A number key is read once, not twice. A key that is waiting keeps a dark border, so it does not fade into the paper. The keys grow with the system text size so a digit is not cut off, and they shrink on a short screen so the grid stays on screen. Turned sideways, the keys sit beside the grid. Turning the phone, or changing the text size, does not wipe the numbers you typed. Erase is its own row so the word stays whole. Notes is a button that says Notes on or Notes off. While it is on, a number key writes a small note in an empty square, and the key fills in when that note is there. Undo steps back, including notes. Check my numbers says how many numbers look wrong and does not end the game. A wrong number is still red as you type. A finished puzzle shows Well done, with Next puzzle and Done. Done closes the puzzle. The ad, if one is added later, belongs on Done, never on Next puzzle. A debug build has Fill solution so Well done can be opened quickly.
 
 # Steps finished
 - Step 1, Nov 16 2026: the app project exists and opens on a title screen that says Senior Sudoku. Not yet run on a phone from this machine.
@@ -62,9 +62,10 @@ This can still change before the first Google Play upload. After that upload it 
 - Step 6, Nov 17 2026: a game in progress. Place a number, write a note, undo. A clue cannot be changed. A wrong number is listed. Unit tests passed.
 - Step 7, Nov 18 2026: the grid is on the opening screen. Each square takes an equal share of the screen. A tap marks that square and names its row and column. Clues are dark. The digit stays the same share of its square when the system text size is turned up, and its line height does too, so the grid lines do not cut through it. Unit tests passed. Not yet run on a phone.
 - Step 8, Nov 20 2026: number keys under the grid. A marked square takes a digit. Erase clears a digit the player wrote. A clue does not change. A wrong digit is shown in red. The keys are three across, the same size, and Erase is its own row. Unit tests passed. Not yet run on a phone.
+- Step 8 continued, Nov 21 2026: Notes, Undo, Check my numbers, and the Well done screen. Fill solution shows only on a debug build. Unit tests passed. Not yet run on a phone.
 
 # What is broken right now
 Nothing known in the code. Unit tests passed. It still needs a first run in Android Studio on an emulator or a phone.
 
 # Next step
-The written plan stops at step 8.
+Step 9: Home screen, New game levels, Today's puzzle.

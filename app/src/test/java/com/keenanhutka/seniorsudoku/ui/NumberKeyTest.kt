@@ -12,6 +12,8 @@ class NumberKeyTest {
         assertFalse(keysAcceptDigit(hasSelection = false, given = false))
         assertFalse(keysAcceptDigit(hasSelection = true, given = true))
         assertTrue(keysAcceptDigit(hasSelection = true, given = false))
+        assertFalse(keysAcceptDigit(hasSelection = true, given = false, notesOn = true, cellEmpty = false))
+        assertTrue(keysAcceptDigit(hasSelection = true, given = false, notesOn = true, cellEmpty = true))
     }
 
     @Test
@@ -19,6 +21,7 @@ class NumberKeyTest {
         assertEquals("5", numberKeyLabel(5, entered = false))
         assertEquals("5, entered", numberKeyLabel(5, entered = true))
         assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
+        assertEquals("5, noted", numberKeyLabel(5, entered = true, noted = true))
     }
 
     @Test

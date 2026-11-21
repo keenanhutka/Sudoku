@@ -492,6 +492,23 @@ class GameTest {
         assertEquals(setOf(allowed), noted.notesAt(hole))
     }
 
+    @Test
+    fun fillingTheSolutionFinishesThePuzzleAndUndoPutsItBack() {
+        val hole = firstHole()
+        val noted = Game.start(puzzle).toggleNote(hole, freeDigit(hole))
+        val filled = noted.revealSolution()
+        assertTrue(filled.isComplete())
+        assertTrue(filled.wrongCells().isEmpty())
+        for (index in 0 until Board.CELL_COUNT) {
+            assertEquals(puzzle.solution[index], filled.board[index])
+            assertTrue(filled.notesAt(index).isEmpty())
+        }
+        val back = filled.undo()
+        assertEquals(puzzle.board.toText(), back.board.toText())
+        assertEquals(setOf(freeDigit(hole)), back.notesAt(hole))
+        assertFalse(back.isComplete())
+    }
+
     private fun openCell(freeCount: Int): Int =
         (0 until Board.CELL_COUNT).first { puzzle.board[it] == 0 && freeDigits(it).size >= freeCount }
 

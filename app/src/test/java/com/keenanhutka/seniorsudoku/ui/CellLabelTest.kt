@@ -56,4 +56,12 @@ class CellLabelTest {
             selectionLine(-1, 0, given = false, wrong = false)
         }
     }
+
+    @Test
+    fun checkMyNumbersNamesHowManyAreWrong() {
+        assertEquals("No mistakes.", mistakeMessage(0))
+        assertEquals("1 number looks wrong.", mistakeMessage(1))
+        assertEquals("2 numbers look wrong.", mistakeMessage(2))
+        assertThrows(IllegalArgumentException::class.java) { mistakeMessage(-1) }
+    }
 }

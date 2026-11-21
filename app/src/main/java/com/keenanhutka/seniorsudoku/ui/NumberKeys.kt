@@ -37,14 +37,28 @@ private val KeyShape = RoundedCornerShape(8.dp)
 private val DigitText = 32.sp
 private val WordText = 22.sp
 
-/** A number key works only on a marked square that is not a clue. */
-internal fun keysAcceptDigit(hasSelection: Boolean, given: Boolean): Boolean = hasSelection && !given
+/** A number key works only on a marked square that is not a clue. Notes need an empty square. */
+internal fun keysAcceptDigit(
+    hasSelection: Boolean,
+    given: Boolean,
+    notesOn: Boolean = false,
+    cellEmpty: Boolean = true,
+): Boolean {
+    if (!hasSelection || given) return false
+    return !notesOn || cellEmpty
+}
 
 /** What TalkBack reads for one number key. */
-internal fun numberKeyLabel(digit: Int, entered: Boolean, wrong: Boolean = false): String {
+internal fun numberKeyLabel(
+    digit: Int,
+    entered: Boolean,
+    wrong: Boolean = false,
+    noted: Boolean = false,
+): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
     return when {
         entered && wrong -> "$digit, wrong"
+        entered && noted -> "$digit, noted"
         entered -> "$digit, entered"
         else -> digit.toString()
     }
@@ -80,6 +94,9 @@ fun NumberKeys(
     onErase: () -> Unit,
     modifier: Modifier = Modifier,
     maxHeight: Dp? = null,
+    eraseEnabled: Boolean = enabled,
+    notesOn: Boolean = false,
+    notedDigits: Set<Int> = emptySet(),
 ) {
     val height = fittedHeight(maxHeight)
     // 1 stays on the left even when the phone language is right to left.
@@ -88,12 +105,12 @@ fun NumberKeys(
             modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, onDigit, height)
-            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, onDigit, height)
-            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, onDigit, height)
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
             WordKey(
                 text = "Erase",
-                enabled = enabled,
+                enabled = eraseEnabled,
                 onClick = onErase,
                 modifier = Modifier.fillMaxWidth().height(height),
             )
@@ -128,6 +145,8 @@ private fun DigitRow(
     enabled: Boolean,
     enteredDigit: Int,
     enteredIsWrong: Boolean,
+    notesOn: Boolean,
+    notedDigits: Set<Int>,
     onDigit: (Int) -> Unit,
     height: Dp,
 ) {
@@ -136,11 +155,14 @@ private fun DigitRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         for (digit in digits) {
+            val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             DigitKey(
                 digit = digit,
                 enabled = enabled,
-                entered = enteredDigit == digit,
-                wrong = enteredDigit == digit && enteredIsWrong,
+                entered = entered,
+                wrong = entered && enteredIsWrong && !notesOn,
+                noted = notesOn && entered,
+                notesOn = notesOn,
                 onClick = { onDigit(digit) },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -154,13 +176,15 @@ private fun DigitKey(
     enabled: Boolean,
     entered: Boolean,
     wrong: Boolean,
+    noted: Boolean,
+    notesOn: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered, wrong),
-        action = "Enter",
+        description = numberKeyLabel(digit, entered, wrong, noted),
+        action = if (notesOn) "Note" else "Enter",
         enabled = enabled,
         entered = entered,
         wrong = wrong,

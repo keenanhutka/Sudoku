@@ -82,6 +82,13 @@ class Game private constructor(
         return Game(level, clues, solution, previous.board, previous.notes, history.dropLast(1))
     }
 
+    /** Fills every square with the solution. Undo puts the puzzle back. */
+    fun revealSolution(): Game {
+        val already = isComplete() && notes.all { it.isEmpty() }
+        if (already) return this
+        return remember(solution, List(Board.CELL_COUNT) { emptySet() })
+    }
+
     private fun remember(board: Board, notes: List<Set<Int>>): Game {
         return Game(level, clues, solution, board, notes, history + Moment(this.board, this.notes))
     }

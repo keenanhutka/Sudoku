@@ -49,3 +49,13 @@ fun selectionLine(
 
 /** What TalkBack calls the tap. A second tap clears the mark. */
 fun selectionAction(selected: Boolean): String = if (selected) "Clear" else "Select"
+
+/** The sentence under the title after Check my numbers. */
+fun mistakeMessage(count: Int): String {
+    require(count >= 0) { "A mistake count cannot be negative." }
+    return when (count) {
+        0 -> "No mistakes."
+        1 -> "1 number looks wrong."
+        else -> "$count numbers look wrong."
+    }
+}
