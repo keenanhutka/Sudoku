@@ -3,6 +3,8 @@ package com.keenanhutka.seniorsudoku.engine
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
+import java.util.TimeZone
 
 class GeneratorTest {
     @Test
@@ -49,6 +51,16 @@ class GeneratorTest {
         assertEquals(first.grade, second.grade)
         val tomorrow = dailyPuzzle(PuzzleDate(2026, 11, 18))
         assertTrue(first.board.toText() != tomorrow.board.toText())
+    }
+
+    @Test
+    fun theCalendarDayBecomesThePuzzleDate() {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        calendar.clear()
+        calendar.set(2026, Calendar.NOVEMBER, 22)
+        assertEquals(PuzzleDate(2026, 11, 22), todayPuzzleDate(calendar))
+        calendar.set(2026, Calendar.JANUARY, 1)
+        assertEquals(PuzzleDate(2026, 1, 1), todayPuzzleDate(calendar))
     }
 
     private fun assertSymmetric(board: Board) {

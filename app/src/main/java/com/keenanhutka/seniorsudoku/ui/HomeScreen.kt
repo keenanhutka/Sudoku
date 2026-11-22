@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -39,36 +42,56 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.keenanhutka.seniorsudoku.engine.Level
+import com.keenanhutka.seniorsudoku.engine.dailyPuzzle
 import com.keenanhutka.seniorsudoku.engine.newPuzzle
+import com.keenanhutka.seniorsudoku.engine.todayPuzzleDate
 import com.keenanhutka.seniorsudoku.game.Game
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
+import kotlin.math.max
 
 private val ToolHeight = 56.dp
 private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
+private const val CouldNotMake = "Could not make a puzzle. Try again."
 
-/** The opening screen. Tap a square, then tap a number to write it. */
+private enum class Page { Home, Loading, Play }
+
+/** A choice on the home screen. Today's puzzle is the same puzzle all day. */
+internal enum class HomeChoice(val label: String, val action: String, val level: Level, val daily: Boolean) {
+    Today("Today's puzzle", "Play today's puzzle", Level.Medium, true),
+    Easy("Easy", "Play an easy puzzle", Level.Easy, false),
+    Medium("Medium", "Play a medium puzzle", Level.Medium, false),
+    Hard("Hard", "Play a hard puzzle", Level.Hard, false),
+}
+
+/** The name on the play screen. Today's puzzle is not just called Medium. */
+internal fun playTitle(level: Level, today: Boolean): String =
+    if (today) HomeChoice.Today.label else level.name
+
+/** The opening screen. Pick a puzzle, then tap a square and a number. */
 @Composable
 fun HomeScreen() {
     // Kept when the phone turns, so the numbers you typed are not wiped.
-    var game by remember { mutableStateOf(Game.start(newPuzzle(Level.Easy, Random(1)))) }
+    var game by remember { mutableStateOf<Game?>(null) }
+    var page by remember { mutableStateOf(Page.Home) }
+    var today by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<Int?>(null) }
     var notesOn by remember { mutableStateOf(false) }
     var checkMessage by remember { mutableStateOf<String?>(null) }
-    var closed by remember { mutableStateOf(false) }
+    var homeNotice by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val debuggable = isDebuggable()
-    val digit = selected?.let { game.board[it] } ?: 0
-    val given = selected?.let { game.isGiven(it) } == true
-    val wrong = selected?.let { game.isWrong(it) } == true
-    val notes = selected?.let { game.notesAt(it) } ?: emptySet()
+    val digit = selected?.let { game?.board?.get(it) } ?: 0
+    val given = selected?.let { game?.isGiven(it) } == true
+    val wrong = selected?.let { game?.isWrong(it) } == true
+    val notes = selected?.let { game?.notesAt(it) } ?: emptySet()
     val cellEmpty = digit == 0
     val accept = keysAcceptDigit(selected != null, given, notesOn, cellEmpty)
     val canErase = canEraseCell(selected != null, given, digit != 0, notes.isNotEmpty())
@@ -77,75 +100,108 @@ fun HomeScreen() {
         checkMessage = null
     }
 
-    fun openPuzzle(level: Level) {
+    fun openPuzzle(level: Level, daily: Boolean) {
+        if (loading) return
         loading = true
+        page = Page.Loading
+        homeNotice = null
         scope.launch {
-            val puzzle = withContext(Dispatchers.Default) { newPuzzle(level) }
+            val puzzle = try {
+                withContext(Dispatchers.Default) {
+                    if (daily) dailyPuzzle(todayPuzzleDate()) else newPuzzle(level)
+                }
+            } catch (error: IllegalStateException) {
+                homeNotice = CouldNotMake
+                loading = false
+                page = Page.Home
+                return@launch
+            }
             game = Game.start(puzzle)
+            today = daily
             selected = null
             notesOn = false
             checkMessage = null
-            closed = false
             loading = false
+            page = Page.Play
         }
     }
 
+    fun returnHome() {
+        page = Page.Home
+        today = false
+        selected = null
+        notesOn = false
+        checkMessage = null
+    }
+
     val onDigit: (Int) -> Unit = onDigit@{ number ->
+        val playing = game ?: return@onDigit
         val index = selected ?: return@onDigit
-        if (game.isGiven(index)) return@onDigit
+        if (playing.isGiven(index)) return@onDigit
         if (notesOn) {
-            if (game.board[index] != 0) return@onDigit
-            val next = game.toggleNote(index, number)
-            if (next === game && number !in game.notesAt(index)) {
+            if (playing.board[index] != 0) return@onDigit
+            val next = playing.toggleNote(index, number)
+            if (next === playing && number !in playing.notesAt(index)) {
                 checkMessage = BlockedNote
                 return@onDigit
             }
             game = next
             if (checkMessage == BlockedNote) checkMessage = null
         } else {
-            val next = game.enterDigit(index, number)
-            if (next === game) return@onDigit
+            val next = playing.enterDigit(index, number)
+            if (next === playing) return@onDigit
             game = next
             clearNotice()
         }
     }
     val onErase: () -> Unit = onErase@{
+        val playing = game ?: return@onErase
         val index = selected ?: return@onErase
-        if (game.isGiven(index)) return@onErase
-        val next = game.clearCell(index)
-        if (next === game) return@onErase
+        if (playing.isGiven(index)) return@onErase
+        val next = playing.clearCell(index)
+        if (next === playing) return@onErase
         game = next
         clearNotice()
     }
-    val onUndo: () -> Unit = {
-        val next = game.undo()
-        if (next !== game) {
+    val onUndo: () -> Unit = onUndo@{
+        val playing = game ?: return@onUndo
+        val next = playing.undo()
+        if (next !== playing) {
             game = next
             clearNotice()
         }
     }
-    val onCheck: () -> Unit = {
-        checkMessage = mistakeMessage(game.wrongCells().size, unfinished = !game.isComplete())
+    val onCheck: () -> Unit = onCheck@{
+        val playing = game ?: return@onCheck
+        checkMessage = mistakeMessage(playing.wrongCells().size, unfinished = !playing.isComplete())
     }
-    val onFill: () -> Unit = {
-        game = game.revealSolution()
-        clearNotice()
+    val onFill: () -> Unit = onFill@{
+        val playing = game ?: return@onFill
+        val next = playing.revealSolution()
+        if (next !== playing) {
+            game = next
+            clearNotice()
+        }
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        val current = game
         when {
-            loading -> CenteredMessage("Making a puzzle...")
-            closed -> ClosedScreen(onNewPuzzle = { openPuzzle(game.level) })
-            game.isComplete() -> WellDone(
-                onNext = { openPuzzle(game.level) },
+            page == Page.Loading || loading -> CenteredMessage("Making a puzzle...")
+            page == Page.Home || current == null -> HomeMenu(
+                notice = homeNotice,
+                onChoice = { choice -> openPuzzle(choice.level, choice.daily) },
+            )
+            current.isComplete() -> WellDone(
+                onNext = { openPuzzle(current.level, daily = false) },
                 onDone = {
-                    // Step 9 returns to the home screen from here.
                     // Step 17 may show an ad after Done. Next puzzle never shows one.
-                    closed = true
+                    returnHome()
                 },
             )
             else -> PlayScreen(
-                game = game,
+                game = current,
+                title = playTitle(current.level, today),
                 selected = selected,
                 digit = digit,
                 given = given,
@@ -155,7 +211,7 @@ fun HomeScreen() {
                 checkMessage = checkMessage,
                 accept = accept,
                 canErase = canErase,
-                canUndo = game.canUndo(),
+                canUndo = current.canUndo(),
                 debuggable = debuggable,
                 onSelect = { index ->
                     selected = if (selected == index) null else index
@@ -178,6 +234,7 @@ fun HomeScreen() {
 @Composable
 private fun PlayScreen(
     game: Game,
+    title: String,
     selected: Int?,
     digit: Int,
     given: Boolean,
@@ -218,7 +275,7 @@ private fun PlayScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ScreenHeader(selected, digit, given, wrong, notes, checkMessage)
+                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage)
                     SudokuBoard(
                         game = game,
                         selected = selected,
@@ -262,7 +319,7 @@ private fun PlayScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ScreenHeader(selected, digit, given, wrong, notes, checkMessage)
+                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage)
                 SudokuBoard(
                     game = game,
                     selected = selected,
@@ -376,6 +433,7 @@ private fun ToolButton(
 
 @Composable
 private fun ScreenHeader(
+    title: String,
     selected: Int?,
     digit: Int,
     given: Boolean,
@@ -384,7 +442,7 @@ private fun ScreenHeader(
     checkMessage: String?,
 ) {
     Text(
-        text = "Senior Sudoku",
+        text = title,
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onBackground,
@@ -412,6 +470,58 @@ private fun ScreenHeader(
                 WrongInk
             },
         )
+    }
+}
+
+@Composable
+private fun HomeMenu(notice: String?, onChoice: (HomeChoice) -> Unit) {
+    val buttonHeight = homeButtonHeight()
+    Column(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = "Senior Sudoku",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text = "Pick a puzzle.",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        if (notice != null) {
+            Text(
+                text = notice,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = WrongInk,
+                textAlign = TextAlign.Center,
+            )
+        }
+        for (choice in HomeChoice.entries) {
+            ToolButton(
+                text = choice.label,
+                action = choice.action,
+                onClick = { onChoice(choice) },
+                modifier = Modifier.fillMaxWidth().height(buttonHeight),
+            )
+        }
+    }
+}
+
+@Composable
+private fun homeButtonHeight(): Dp {
+    val density = LocalDensity.current
+    return with(density) {
+        max(56.dp.toPx(), 20.sp.toPx() + 28.dp.toPx()).toDp()
     }
 }
 
@@ -444,35 +554,6 @@ private fun WellDone(onNext: () -> Unit, onDone: () -> Unit) {
         ToolButton(
             text = "Done",
             onClick = onDone,
-            modifier = Modifier.fillMaxWidth().height(ToolHeight),
-        )
-    }
-}
-
-@Composable
-private fun ClosedScreen(onNewPuzzle: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-    ) {
-        Text(
-            text = "Senior Sudoku",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = "The puzzle is closed.",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        ToolButton(
-            text = "New puzzle",
-            onClick = onNewPuzzle,
             modifier = Modifier.fillMaxWidth().height(ToolHeight),
         )
     }

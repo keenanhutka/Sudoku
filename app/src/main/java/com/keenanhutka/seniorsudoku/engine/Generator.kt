@@ -1,5 +1,6 @@
 package com.keenanhutka.seniorsudoku.engine
 
+import java.util.Calendar
 import kotlin.random.Random
 
 /** Easy has 40 clues. Medium has 32. Hard has 28. */
@@ -46,6 +47,15 @@ fun newPuzzle(level: Level, random: Random = Random): Puzzle {
 fun dailyPuzzle(date: PuzzleDate): Puzzle {
     val seed = date.year * 372L + date.month * 31L + date.day
     return newPuzzle(Level.Medium, Random(seed))
+}
+
+/** The phone's calendar day. No clock time and no network. */
+fun todayPuzzleDate(now: Calendar = Calendar.getInstance()): PuzzleDate {
+    return PuzzleDate(
+        now.get(Calendar.YEAR),
+        now.get(Calendar.MONTH) + 1,
+        now.get(Calendar.DAY_OF_MONTH),
+    )
 }
 
 private fun daysInMonth(year: Int, month: Int): Int = when (month) {
