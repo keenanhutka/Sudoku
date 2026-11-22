@@ -65,9 +65,11 @@ internal fun numberKeyLabel(
     entered: Boolean,
     wrong: Boolean = false,
     noted: Boolean = false,
+    given: Boolean = false,
 ): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
     return when {
+        entered && given -> "$digit, given"
         entered && wrong -> "$digit, wrong"
         entered && noted -> "$digit, noted"
         entered -> "$digit, entered"
@@ -115,6 +117,7 @@ fun NumberKeys(
     eraseEnabled: Boolean = enabled,
     notesOn: Boolean = false,
     notedDigits: Set<Int> = emptySet(),
+    given: Boolean = false,
 ) {
     val height = fittedHeight(maxHeight)
     // 1 stays on the left even when the phone language is right to left.
@@ -123,9 +126,9 @@ fun NumberKeys(
             modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
-            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
-            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, onDigit, height)
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
             WordKey(
                 text = "Erase",
                 enabled = eraseEnabled,
@@ -165,6 +168,7 @@ private fun DigitRow(
     enteredIsWrong: Boolean,
     notesOn: Boolean,
     notedDigits: Set<Int>,
+    given: Boolean,
     onDigit: (Int) -> Unit,
     height: Dp,
 ) {
@@ -181,6 +185,7 @@ private fun DigitRow(
                 wrong = entered && enteredIsWrong && !notesOn,
                 noted = notesOn && entered,
                 notesOn = notesOn,
+                given = given && entered,
                 onClick = { onDigit(digit) },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -196,12 +201,13 @@ private fun DigitKey(
     wrong: Boolean,
     noted: Boolean,
     notesOn: Boolean,
+    given: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered, wrong, noted),
+        description = numberKeyLabel(digit, entered, wrong, noted, given),
         action = numberKeyAction(notesOn, noted),
         enabled = enabled,
         entered = entered,
