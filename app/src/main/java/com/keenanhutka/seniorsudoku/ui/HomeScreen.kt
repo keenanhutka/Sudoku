@@ -559,9 +559,10 @@ private fun LeavePuzzle(onStay: () -> Unit, onLeave: () -> Unit) {
         Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
             text = "Leave this puzzle?",
@@ -572,6 +573,7 @@ private fun LeavePuzzle(onStay: () -> Unit, onLeave: () -> Unit) {
         )
         Text(
             text = LeaveWarning,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
