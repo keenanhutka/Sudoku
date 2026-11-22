@@ -66,7 +66,8 @@ class CellLabelTest {
     @Test
     fun checkMyNumbersNamesHowManyAreWrong() {
         assertEquals("No mistakes.", mistakeMessage(0))
-        assertEquals("1 number looks wrong.", mistakeMessage(1))
+        assertEquals("No mistakes. The puzzle is not finished.", mistakeMessage(0, unfinished = true))
+        assertEquals("1 number looks wrong.", mistakeMessage(1, unfinished = true))
         assertEquals("2 numbers look wrong.", mistakeMessage(2))
         assertThrows(IllegalArgumentException::class.java) { mistakeMessage(-1) }
     }

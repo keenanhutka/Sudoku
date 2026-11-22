@@ -116,7 +116,7 @@ fun HomeScreen() {
         clearNotice()
     }
     val onCheck: () -> Unit = {
-        checkMessage = mistakeMessage(game.wrongCells().size)
+        checkMessage = mistakeMessage(game.wrongCells().size, unfinished = !game.isComplete())
     }
     val onFill: () -> Unit = {
         game = game.revealSolution()
@@ -394,7 +394,7 @@ private fun ScreenHeader(
             text = checkMessage,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = if (checkMessage == "No mistakes.") {
+            color = if (checkMessage.startsWith("No mistakes")) {
                 MaterialTheme.colorScheme.onBackground
             } else {
                 WrongInk

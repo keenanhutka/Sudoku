@@ -54,11 +54,12 @@ fun selectionAction(selected: Boolean): String = if (selected) "Clear" else "Sel
 fun notesButtonAction(notesOn: Boolean): String = if (notesOn) "Turn notes off" else "Turn notes on"
 
 /** The sentence under the title after Check my numbers. */
-fun mistakeMessage(count: Int): String {
+fun mistakeMessage(count: Int, unfinished: Boolean = false): String {
     require(count >= 0) { "A mistake count cannot be negative." }
-    return when (count) {
-        0 -> "No mistakes."
-        1 -> "1 number looks wrong."
-        else -> "$count numbers look wrong."
+    return when {
+        count == 1 -> "1 number looks wrong."
+        count > 1 -> "$count numbers look wrong."
+        unfinished -> "No mistakes. The puzzle is not finished."
+        else -> "No mistakes."
     }
 }
