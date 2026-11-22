@@ -47,8 +47,8 @@ fun selectionLine(
     }
 }
 
-/** What TalkBack calls the tap. A second tap clears the mark. */
-fun selectionAction(selected: Boolean): String = if (selected) "Clear" else "Select"
+/** What TalkBack calls the tap. A second tap removes the mark. It does not erase the number. */
+fun selectionAction(selected: Boolean): String = if (selected) "Deselect" else "Select"
 
 /** What TalkBack calls the tap on the Notes button. The label shows the current state. */
 fun notesButtonAction(notesOn: Boolean): String = if (notesOn) "Turn notes off" else "Turn notes on"
