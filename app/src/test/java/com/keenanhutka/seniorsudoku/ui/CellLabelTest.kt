@@ -37,6 +37,12 @@ class CellLabelTest {
     }
 
     @Test
+    fun theNotesButtonSaysWhetherTheTapTurnsNotesOnOrOff() {
+        assertEquals("Turn notes on", notesButtonAction(notesOn = false))
+        assertEquals("Turn notes off", notesButtonAction(notesOn = true))
+    }
+
+    @Test
     fun theLineUnderTheTitleNamesTheSelectedSquare() {
         assertEquals("Tap a square.", selectionLine(null, 0, given = false, wrong = false))
         assertEquals("Row 4, column 2.", selectionLine(28, 0, given = false, wrong = false))

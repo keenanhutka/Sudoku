@@ -299,6 +299,7 @@ private fun PlayTools(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ToolButton(
                 text = if (notesOn) "Notes on" else "Notes off",
+                action = notesButtonAction(notesOn),
                 filled = notesOn,
                 onClick = onNotes,
                 modifier = Modifier.weight(1f).height(ToolHeight),
@@ -332,6 +333,7 @@ private fun ToolButton(
     modifier: Modifier,
     enabled: Boolean = true,
     filled: Boolean = false,
+    action: String = text,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val paper = MaterialTheme.colorScheme.background
@@ -342,7 +344,7 @@ private fun ToolButton(
             .clip(ToolShape)
             .background(if (filled) fill else paper)
             .border(2.dp, if (filled) fill else ink, ToolShape)
-            .clickable(enabled = enabled, onClickLabel = text, onClick = onClick)
+            .clickable(enabled = enabled, onClickLabel = action, onClick = onClick)
             .semantics { contentDescription = text },
         contentAlignment = Alignment.Center,
     ) {

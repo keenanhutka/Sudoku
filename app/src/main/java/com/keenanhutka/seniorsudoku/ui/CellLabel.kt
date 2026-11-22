@@ -50,6 +50,9 @@ fun selectionLine(
 /** What TalkBack calls the tap. A second tap clears the mark. */
 fun selectionAction(selected: Boolean): String = if (selected) "Clear" else "Select"
 
+/** What TalkBack calls the tap on the Notes button. The label shows the current state. */
+fun notesButtonAction(notesOn: Boolean): String = if (notesOn) "Turn notes off" else "Turn notes on"
+
 /** The sentence under the title after Check my numbers. */
 fun mistakeMessage(count: Int): String {
     require(count >= 0) { "A mistake count cannot be negative." }
