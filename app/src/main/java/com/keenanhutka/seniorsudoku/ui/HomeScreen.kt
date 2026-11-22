@@ -103,19 +103,26 @@ fun HomeScreen() {
             game = next
             if (checkMessage == BlockedNote) checkMessage = null
         } else {
-            game = game.enterDigit(index, number)
+            val next = game.enterDigit(index, number)
+            if (next === game) return@onDigit
+            game = next
             clearNotice()
         }
     }
     val onErase: () -> Unit = onErase@{
         val index = selected ?: return@onErase
         if (game.isGiven(index)) return@onErase
-        game = game.clearCell(index)
+        val next = game.clearCell(index)
+        if (next === game) return@onErase
+        game = next
         clearNotice()
     }
     val onUndo: () -> Unit = {
-        game = game.undo()
-        clearNotice()
+        val next = game.undo()
+        if (next !== game) {
+            game = next
+            clearNotice()
+        }
     }
     val onCheck: () -> Unit = {
         checkMessage = mistakeMessage(game.wrongCells().size, unfinished = !game.isComplete())
