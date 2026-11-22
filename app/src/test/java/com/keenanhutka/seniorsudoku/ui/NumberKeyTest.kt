@@ -17,6 +17,15 @@ class NumberKeyTest {
     }
 
     @Test
+    fun eraseWorksOnlyWhenTheSquareHasANumberOrANote() {
+        assertFalse(canEraseCell(hasSelection = false, given = false, hasDigit = false, hasNotes = false))
+        assertFalse(canEraseCell(hasSelection = true, given = true, hasDigit = true, hasNotes = false))
+        assertFalse(canEraseCell(hasSelection = true, given = false, hasDigit = false, hasNotes = false))
+        assertTrue(canEraseCell(hasSelection = true, given = false, hasDigit = true, hasNotes = false))
+        assertTrue(canEraseCell(hasSelection = true, given = false, hasDigit = false, hasNotes = true))
+    }
+
+    @Test
     fun theEnteredNumberIsNamed() {
         assertEquals("5", numberKeyLabel(5, entered = false))
         assertEquals("5, entered", numberKeyLabel(5, entered = true))

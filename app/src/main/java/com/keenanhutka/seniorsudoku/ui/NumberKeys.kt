@@ -48,6 +48,11 @@ internal fun keysAcceptDigit(
     return !notesOn || cellEmpty
 }
 
+/** Erase works only when the marked square has a number or a note the player added. */
+internal fun canEraseCell(hasSelection: Boolean, given: Boolean, hasDigit: Boolean, hasNotes: Boolean): Boolean {
+    return hasSelection && !given && (hasDigit || hasNotes)
+}
+
 /** What TalkBack reads for one number key. */
 internal fun numberKeyLabel(
     digit: Int,

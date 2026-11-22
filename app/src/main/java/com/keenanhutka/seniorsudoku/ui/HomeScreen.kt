@@ -71,7 +71,7 @@ fun HomeScreen() {
     val notes = selected?.let { game.notesAt(it) } ?: emptySet()
     val cellEmpty = digit == 0
     val accept = keysAcceptDigit(selected != null, given, notesOn, cellEmpty)
-    val canErase = selected != null && !given
+    val canErase = canEraseCell(selected != null, given, digit != 0, notes.isNotEmpty())
 
     fun clearNotice() {
         checkMessage = null
