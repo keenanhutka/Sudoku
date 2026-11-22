@@ -32,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -392,6 +394,7 @@ private fun ScreenHeader(
     if (checkMessage != null) {
         Text(
             text = checkMessage,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = if (checkMessage.startsWith("No mistakes")) {
