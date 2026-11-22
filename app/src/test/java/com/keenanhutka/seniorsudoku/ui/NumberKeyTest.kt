@@ -26,6 +26,14 @@ class NumberKeyTest {
     }
 
     @Test
+    fun theNumberAlreadyInTheSquareIsNotOfferedAgain() {
+        assertFalse(digitKeyEnabled(padEnabled = false, notesOn = false, alreadyEntered = false))
+        assertFalse(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true))
+        assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = false))
+        assertTrue(digitKeyEnabled(padEnabled = true, notesOn = true, alreadyEntered = true))
+    }
+
+    @Test
     fun theEnteredNumberIsNamed() {
         assertEquals("5", numberKeyLabel(5, entered = false))
         assertEquals("5, entered", numberKeyLabel(5, entered = true))

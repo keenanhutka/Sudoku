@@ -53,6 +53,12 @@ internal fun canEraseCell(hasSelection: Boolean, given: Boolean, hasDigit: Boole
     return hasSelection && !given && (hasDigit || hasNotes)
 }
 
+/** The number already in the square cannot be entered again. A note key still toggles. */
+internal fun digitKeyEnabled(padEnabled: Boolean, notesOn: Boolean, alreadyEntered: Boolean): Boolean {
+    if (!padEnabled) return false
+    return notesOn || !alreadyEntered
+}
+
 /** What TalkBack reads for one number key. */
 internal fun numberKeyLabel(
     digit: Int,
@@ -170,7 +176,7 @@ private fun DigitRow(
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             DigitKey(
                 digit = digit,
-                enabled = enabled,
+                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn),
                 entered = entered,
                 wrong = entered && enteredIsWrong && !notesOn,
                 noted = notesOn && entered,
