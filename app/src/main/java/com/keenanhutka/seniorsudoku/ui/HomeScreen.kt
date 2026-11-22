@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +51,7 @@ import com.keenanhutka.seniorsudoku.engine.dailyPuzzle
 import com.keenanhutka.seniorsudoku.engine.newPuzzle
 import com.keenanhutka.seniorsudoku.engine.todayPuzzleDate
 import com.keenanhutka.seniorsudoku.game.Game
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,6 +61,7 @@ private val ToolHeight = 56.dp
 private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
+internal const val LeaveWarning = "Your numbers are not saved yet."
 
 private enum class Page { Home, Loading, Play }
 
@@ -85,6 +88,7 @@ fun HomeScreen() {
     var notesOn by remember { mutableStateOf(false) }
     var checkMessage by remember { mutableStateOf<String?>(null) }
     var homeNotice by remember { mutableStateOf<String?>(null) }
+    var confirmLeave by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val debuggable = isDebuggable()
@@ -110,6 +114,8 @@ fun HomeScreen() {
                 withContext(Dispatchers.Default) {
                     if (daily) dailyPuzzle(todayPuzzleDate()) else newPuzzle(level)
                 }
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: IllegalStateException) {
                 homeNotice = CouldNotMake
                 loading = false
@@ -127,6 +133,7 @@ fun HomeScreen() {
     }
 
     fun returnHome() {
+        confirmLeave = false
         page = Page.Home
         today = false
         selected = null
@@ -188,6 +195,10 @@ fun HomeScreen() {
         val current = game
         when {
             page == Page.Loading || loading -> CenteredMessage("Making a puzzle...")
+            confirmLeave -> LeavePuzzle(
+                onStay = { confirmLeave = false },
+                onLeave = { returnHome() },
+            )
             page == Page.Home || current == null -> HomeMenu(
                 notice = homeNotice,
                 onChoice = { choice -> openPuzzle(choice.level, choice.daily) },
@@ -226,6 +237,7 @@ fun HomeScreen() {
                 onFill = onFill,
                 onDigit = onDigit,
                 onErase = onErase,
+                onHome = { confirmLeave = true },
             )
         }
     }
@@ -253,6 +265,7 @@ private fun PlayScreen(
     onFill: () -> Unit,
     onDigit: (Int) -> Unit,
     onErase: () -> Unit,
+    onHome: () -> Unit,
 ) {
     BoxWithConstraints(
         Modifier
@@ -275,7 +288,7 @@ private fun PlayScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage)
+                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, onHome)
                     SudokuBoard(
                         game = game,
                         selected = selected,
@@ -319,7 +332,7 @@ private fun PlayScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage)
+                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, onHome)
                 SudokuBoard(
                     game = game,
                     selected = selected,
@@ -440,13 +453,28 @@ private fun ScreenHeader(
     wrong: Boolean,
     notes: Set<Int>,
     checkMessage: String?,
+    onHome: () -> Unit,
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
+        )
+        ToolButton(
+            text = "Home",
+            action = "Ask to leave",
+            onClick = onHome,
+            modifier = Modifier.widthIn(min = 96.dp).height(homeButtonHeight()),
+        )
+    }
     Text(
         text = selectionLine(
             index = selected,
@@ -522,6 +550,44 @@ private fun homeButtonHeight(): Dp {
     val density = LocalDensity.current
     return with(density) {
         max(56.dp.toPx(), 20.sp.toPx() + 28.dp.toPx()).toDp()
+    }
+}
+
+@Composable
+private fun LeavePuzzle(onStay: () -> Unit, onLeave: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+    ) {
+        Text(
+            text = "Leave this puzzle?",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = LeaveWarning,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        ToolButton(
+            text = "Stay",
+            action = "Keep playing",
+            onClick = onStay,
+            modifier = Modifier.fillMaxWidth().height(homeButtonHeight()),
+        )
+        ToolButton(
+            text = "Leave",
+            action = "Leave this puzzle",
+            onClick = onLeave,
+            modifier = Modifier.fillMaxWidth().height(homeButtonHeight()),
+        )
     }
 }
 
