@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -65,7 +66,7 @@ private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
 internal const val LeaveWarning = "This puzzle is not saved yet."
-internal const val HintMistake = "A red number is wrong. Fix it before a hint."
+internal const val HintMistake = "A number is wrong. Fix it before a hint."
 internal const val NoHint = "No simple hint right now."
 
 /** The sentence Hint shows. A wrong number blocks the hint. */
@@ -80,6 +81,10 @@ internal fun hintIndex(result: HintResult?): Int? {
     val step = (result as? HintResult.Single)?.step ?: return null
     return (step.row - 1) * Board.SIZE + (step.column - 1)
 }
+
+/** A hint asks for a number in the square, so notes turn off. Otherwise notes stay. */
+internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
+    notesOn && result !is HintResult.Single
 
 private enum class Page { Home, Loading, Play }
 
@@ -218,6 +223,7 @@ fun HomeScreen() {
         hintShowing = result is HintResult.Single
         val index = hintIndex(result)
         if (index != null) selected = index
+        notesOn = keepNotesOn(notesOn, result)
     }
     val onFill: () -> Unit = onFill@{
         val playing = game ?: return@onFill
@@ -543,7 +549,10 @@ private fun ScreenHeader(
     if (checkMessage != null) {
         Text(
             text = checkMessage,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            modifier = Modifier
+                .heightIn(max = 88.dp)
+                .verticalScroll(rememberScrollState())
+                .semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = if (noticeIsError) {

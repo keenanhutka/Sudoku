@@ -4,6 +4,8 @@ import com.keenanhutka.seniorsudoku.engine.HintResult
 import com.keenanhutka.seniorsudoku.engine.HintStep
 import com.keenanhutka.seniorsudoku.engine.Level
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeScreenTest {
@@ -34,5 +36,9 @@ class HomeScreenTest {
         assertEquals(NoHint, hintMessage(null))
         assertEquals(null, hintIndex(null))
         assertEquals(null, hintIndex(HintResult.MistakeFound))
+        assertFalse(keepNotesOn(notesOn = true, hint))
+        assertTrue(keepNotesOn(notesOn = true, HintResult.MistakeFound))
+        assertTrue(keepNotesOn(notesOn = true, null))
+        assertFalse(keepNotesOn(notesOn = false, hint))
     }
 }
