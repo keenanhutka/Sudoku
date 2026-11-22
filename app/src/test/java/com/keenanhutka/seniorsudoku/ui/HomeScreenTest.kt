@@ -1,5 +1,7 @@
 package com.keenanhutka.seniorsudoku.ui
 
+import com.keenanhutka.seniorsudoku.engine.HintResult
+import com.keenanhutka.seniorsudoku.engine.HintStep
 import com.keenanhutka.seniorsudoku.engine.Level
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -20,5 +22,17 @@ class HomeScreenTest {
         assertEquals("Medium", playTitle(Level.Medium, today = false))
         assertEquals("Hard", playTitle(Level.Hard, today = false))
         assertEquals("This puzzle is not saved yet.", LeaveWarning)
+    }
+
+    @Test
+    fun aHintNamesTheStepAndAWrongNumberBlocksIt() {
+        val step = HintStep("Naked single", 4, 8, 2, "In row 4, the digit 2 has only one place to go: column 8.")
+        val hint = HintResult.Single(step)
+        assertEquals(step.sentence, hintMessage(hint))
+        assertEquals(34, hintIndex(hint))
+        assertEquals(HintMistake, hintMessage(HintResult.MistakeFound))
+        assertEquals(NoHint, hintMessage(null))
+        assertEquals(null, hintIndex(null))
+        assertEquals(null, hintIndex(HintResult.MistakeFound))
     }
 }

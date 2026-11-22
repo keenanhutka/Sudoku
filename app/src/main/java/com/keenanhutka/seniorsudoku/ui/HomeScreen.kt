@@ -46,8 +46,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.keenanhutka.seniorsudoku.engine.Board
+import com.keenanhutka.seniorsudoku.engine.HintResult
 import com.keenanhutka.seniorsudoku.engine.Level
 import com.keenanhutka.seniorsudoku.engine.dailyPuzzle
+import com.keenanhutka.seniorsudoku.engine.findHint
 import com.keenanhutka.seniorsudoku.engine.newPuzzle
 import com.keenanhutka.seniorsudoku.engine.todayPuzzleDate
 import com.keenanhutka.seniorsudoku.game.Game
@@ -62,6 +65,21 @@ private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
 internal const val LeaveWarning = "This puzzle is not saved yet."
+internal const val HintMistake = "A red number is wrong. Fix it before a hint."
+internal const val NoHint = "No simple hint right now."
+
+/** The sentence Hint shows. A wrong number blocks the hint. */
+internal fun hintMessage(result: HintResult?): String = when (result) {
+    HintResult.MistakeFound -> HintMistake
+    is HintResult.Single -> result.step.sentence
+    null -> NoHint
+}
+
+/** The square the hint is talking about. Null when there is no step. */
+internal fun hintIndex(result: HintResult?): Int? {
+    val step = (result as? HintResult.Single)?.step ?: return null
+    return (step.row - 1) * Board.SIZE + (step.column - 1)
+}
 
 private enum class Page { Home, Loading, Play }
 
@@ -87,6 +105,8 @@ fun HomeScreen() {
     var selected by remember { mutableStateOf<Int?>(null) }
     var notesOn by remember { mutableStateOf(false) }
     var checkMessage by remember { mutableStateOf<String?>(null) }
+    var noticeIsError by remember { mutableStateOf(false) }
+    var hintShowing by remember { mutableStateOf(false) }
     var homeNotice by remember { mutableStateOf<String?>(null) }
     var confirmLeave by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
@@ -102,6 +122,7 @@ fun HomeScreen() {
 
     fun clearNotice() {
         checkMessage = null
+        hintShowing = false
     }
 
     fun openPuzzle(level: Level, daily: Boolean) {
@@ -127,6 +148,7 @@ fun HomeScreen() {
             selected = null
             notesOn = false
             checkMessage = null
+            hintShowing = false
             loading = false
             page = Page.Play
         }
@@ -139,6 +161,7 @@ fun HomeScreen() {
         selected = null
         notesOn = false
         checkMessage = null
+        hintShowing = false
     }
 
     val onDigit: (Int) -> Unit = onDigit@{ number ->
@@ -150,6 +173,8 @@ fun HomeScreen() {
             val next = playing.toggleNote(index, number)
             if (next === playing && number !in playing.notesAt(index)) {
                 checkMessage = BlockedNote
+                noticeIsError = true
+                hintShowing = false
                 return@onDigit
             }
             game = next
@@ -180,7 +205,19 @@ fun HomeScreen() {
     }
     val onCheck: () -> Unit = onCheck@{
         val playing = game ?: return@onCheck
-        checkMessage = mistakeMessage(playing.wrongCells().size, unfinished = !playing.isComplete())
+        val message = mistakeMessage(playing.wrongCells().size, unfinished = !playing.isComplete())
+        checkMessage = message
+        noticeIsError = !message.startsWith("No mistakes")
+        hintShowing = false
+    }
+    val onHint: () -> Unit = onHint@{
+        val playing = game ?: return@onHint
+        val result = findHint(playing.board, playing.solution)
+        checkMessage = hintMessage(result)
+        noticeIsError = result is HintResult.MistakeFound
+        hintShowing = result is HintResult.Single
+        val index = hintIndex(result)
+        if (index != null) selected = index
     }
     val onFill: () -> Unit = onFill@{
         val playing = game ?: return@onFill
@@ -220,13 +257,17 @@ fun HomeScreen() {
                 notes = notes,
                 notesOn = notesOn,
                 checkMessage = checkMessage,
+                noticeIsError = noticeIsError,
                 accept = accept,
                 canErase = canErase,
                 canUndo = current.canUndo(),
                 debuggable = debuggable,
                 onSelect = { index ->
                     selected = if (selected == index) null else index
-                    if (checkMessage == BlockedNote) checkMessage = null
+                    if (hintShowing || checkMessage == BlockedNote) {
+                        checkMessage = null
+                        hintShowing = false
+                    }
                 },
                 onNotes = {
                     notesOn = !notesOn
@@ -234,6 +275,7 @@ fun HomeScreen() {
                 },
                 onUndo = onUndo,
                 onCheck = onCheck,
+                onHint = onHint,
                 onFill = onFill,
                 onDigit = onDigit,
                 onErase = onErase,
@@ -254,6 +296,7 @@ private fun PlayScreen(
     notes: Set<Int>,
     notesOn: Boolean,
     checkMessage: String?,
+    noticeIsError: Boolean,
     accept: Boolean,
     canErase: Boolean,
     canUndo: Boolean,
@@ -262,6 +305,7 @@ private fun PlayScreen(
     onNotes: () -> Unit,
     onUndo: () -> Unit,
     onCheck: () -> Unit,
+    onHint: () -> Unit,
     onFill: () -> Unit,
     onDigit: (Int) -> Unit,
     onErase: () -> Unit,
@@ -276,7 +320,7 @@ private fun PlayScreen(
         val sideways = maxWidth > maxHeight
         val screenWidth = maxWidth
         val screenHeight = maxHeight
-        val toolRows = if (debuggable) 3 else 2
+        val toolRows = if (debuggable) 4 else 3
         val toolHeight = ToolHeight * toolRows + 8.dp * (toolRows - 1)
         if (sideways) {
             Row(
@@ -288,7 +332,7 @@ private fun PlayScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, onHome)
+                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, noticeIsError, onHome)
                     SudokuBoard(
                         game = game,
                         selected = selected,
@@ -307,6 +351,7 @@ private fun PlayScreen(
                         onNotes = onNotes,
                         onUndo = onUndo,
                         onCheck = onCheck,
+                        onHint = onHint,
                         onFill = onFill,
                     )
                     NumberKeys(
@@ -332,7 +377,7 @@ private fun PlayScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, onHome)
+                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, noticeIsError, onHome)
                 SudokuBoard(
                     game = game,
                     selected = selected,
@@ -346,6 +391,7 @@ private fun PlayScreen(
                     onNotes = onNotes,
                     onUndo = onUndo,
                     onCheck = onCheck,
+                    onHint = onHint,
                     onFill = onFill,
                 )
                 NumberKeys(
@@ -374,6 +420,7 @@ private fun PlayTools(
     onNotes: () -> Unit,
     onUndo: () -> Unit,
     onCheck: () -> Unit,
+    onHint: () -> Unit,
     onFill: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -392,6 +439,12 @@ private fun PlayTools(
                 modifier = Modifier.weight(1f).height(ToolHeight),
             )
         }
+        ToolButton(
+            text = "Hint",
+            action = "Show a hint",
+            onClick = onHint,
+            modifier = Modifier.fillMaxWidth().height(ToolHeight),
+        )
         ToolButton(
             text = "Check my numbers",
             onClick = onCheck,
@@ -453,6 +506,7 @@ private fun ScreenHeader(
     wrong: Boolean,
     notes: Set<Int>,
     checkMessage: String?,
+    noticeIsError: Boolean,
     onHome: () -> Unit,
 ) {
     Row(
@@ -492,10 +546,10 @@ private fun ScreenHeader(
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = if (checkMessage.startsWith("No mistakes")) {
-                MaterialTheme.colorScheme.onBackground
-            } else {
+            color = if (noticeIsError) {
                 WrongInk
+            } else {
+                MaterialTheme.colorScheme.onBackground
             },
         )
     }
