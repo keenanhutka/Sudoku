@@ -1,6 +1,7 @@
 package com.keenanhutka.seniorsudoku.ui
 
 import android.content.pm.ApplicationInfo
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -547,11 +548,12 @@ private fun ScreenHeader(
         color = MaterialTheme.colorScheme.onBackground,
     )
     if (checkMessage != null) {
+        val noticeScroll = remember(checkMessage) { ScrollState(0) }
         Text(
             text = checkMessage,
             modifier = Modifier
                 .heightIn(max = 88.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(noticeScroll)
                 .semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
