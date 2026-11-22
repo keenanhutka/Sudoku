@@ -61,7 +61,7 @@ private val ToolHeight = 56.dp
 private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
-internal const val LeaveWarning = "Your numbers are not saved yet."
+internal const val LeaveWarning = "This puzzle is not saved yet."
 
 private enum class Page { Home, Loading, Play }
 

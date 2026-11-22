@@ -19,6 +19,6 @@ class HomeScreenTest {
         assertEquals("Easy", playTitle(Level.Easy, today = false))
         assertEquals("Medium", playTitle(Level.Medium, today = false))
         assertEquals("Hard", playTitle(Level.Hard, today = false))
-        assertEquals("Your numbers are not saved yet.", LeaveWarning)
+        assertEquals("This puzzle is not saved yet.", LeaveWarning)
     }
 }
