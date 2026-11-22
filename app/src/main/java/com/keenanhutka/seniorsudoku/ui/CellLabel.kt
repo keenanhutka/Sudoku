@@ -50,6 +50,10 @@ fun selectionLine(
 /** What TalkBack calls the tap. A second tap removes the mark. It does not erase the number. */
 fun selectionAction(selected: Boolean): String = if (selected) "Deselect" else "Select"
 
+/** TalkBack on the square a hint just marked. A second tap keeps that hint. */
+fun cellTapAction(marked: Boolean, hintShowing: Boolean): String =
+    if (marked && hintShowing) "Keep the hint" else selectionAction(marked)
+
 /** What TalkBack calls the tap on the Notes button. The label shows the current state. */
 fun notesButtonAction(notesOn: Boolean): String = if (notesOn) "Turn notes off" else "Turn notes on"
 

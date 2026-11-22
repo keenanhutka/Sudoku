@@ -51,6 +51,9 @@ class CellLabelTest {
         assertEquals("Row 4, column 2. Notes 1, 4.", selectionLine(28, 0, given = false, wrong = false, notes = setOf(4, 1)))
         assertEquals("Select", selectionAction(false))
         assertEquals("Deselect", selectionAction(true))
+        assertEquals("Keep the hint", cellTapAction(marked = true, hintShowing = true))
+        assertEquals("Deselect", cellTapAction(marked = true, hintShowing = false))
+        assertEquals("Select", cellTapAction(marked = false, hintShowing = true))
     }
 
     @Test

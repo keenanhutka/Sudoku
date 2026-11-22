@@ -87,6 +87,16 @@ internal fun hintIndex(result: HintResult?): Int? {
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result !is HintResult.Single
 
+/**
+ * Tapping the square a hint just marked keeps that hint.
+ * Any other tap moves the mark. The second value is true when the hint should go away.
+ */
+internal fun selectionAfterTap(selected: Int?, tapped: Int, hintShowing: Boolean): Pair<Int?, Boolean> {
+    if (hintShowing && selected == tapped) return selected to false
+    val next = if (selected == tapped) null else tapped
+    return next to hintShowing
+}
+
 private enum class Page { Home, Loading, Play }
 
 /** A choice on the home screen. Today's puzzle is the same puzzle all day. */
@@ -269,9 +279,11 @@ fun HomeScreen() {
                 canErase = canErase,
                 canUndo = current.canUndo(),
                 debuggable = debuggable,
+                hintShowing = hintShowing,
                 onSelect = { index ->
-                    selected = if (selected == index) null else index
-                    if (hintShowing || checkMessage == BlockedNote) {
+                    val (next, clearHint) = selectionAfterTap(selected, index, hintShowing)
+                    selected = next
+                    if (clearHint || checkMessage == BlockedNote) {
                         checkMessage = null
                         hintShowing = false
                     }
@@ -308,6 +320,7 @@ private fun PlayScreen(
     canErase: Boolean,
     canUndo: Boolean,
     debuggable: Boolean,
+    hintShowing: Boolean,
     onSelect: (Int) -> Unit,
     onNotes: () -> Unit,
     onUndo: () -> Unit,
@@ -344,6 +357,7 @@ private fun PlayScreen(
                         game = game,
                         selected = selected,
                         onSelect = onSelect,
+                        hintShowing = hintShowing,
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                     )
                 }
@@ -389,6 +403,7 @@ private fun PlayScreen(
                     game = game,
                     selected = selected,
                     onSelect = onSelect,
+                    hintShowing = hintShowing,
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                 )
                 PlayTools(

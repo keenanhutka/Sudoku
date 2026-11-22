@@ -40,5 +40,8 @@ class HomeScreenTest {
         assertTrue(keepNotesOn(notesOn = true, HintResult.MistakeFound))
         assertTrue(keepNotesOn(notesOn = true, null))
         assertFalse(keepNotesOn(notesOn = false, hint))
+        assertEquals(34 to false, selectionAfterTap(selected = 34, tapped = 34, hintShowing = true))
+        assertEquals(0 to true, selectionAfterTap(selected = 34, tapped = 0, hintShowing = true))
+        assertEquals(null to false, selectionAfterTap(selected = 34, tapped = 34, hintShowing = false))
     }
 }
