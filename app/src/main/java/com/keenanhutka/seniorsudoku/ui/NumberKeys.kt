@@ -64,6 +64,13 @@ internal fun numberKeyLabel(
     }
 }
 
+/** What TalkBack calls the tap on a number key. */
+internal fun numberKeyAction(notesOn: Boolean, noted: Boolean): String = when {
+    notesOn && noted -> "Remove note"
+    notesOn -> "Add note"
+    else -> "Enter"
+}
+
 private const val KEY_ROWS = 4
 
 /**
@@ -184,7 +191,7 @@ private fun DigitKey(
     KeyFace(
         text = digit.toString(),
         description = numberKeyLabel(digit, entered, wrong, noted),
-        action = if (notesOn) "Note" else "Enter",
+        action = numberKeyAction(notesOn, noted),
         enabled = enabled,
         entered = entered,
         wrong = wrong,

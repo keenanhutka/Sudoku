@@ -22,6 +22,9 @@ class NumberKeyTest {
         assertEquals("5, entered", numberKeyLabel(5, entered = true))
         assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
         assertEquals("5, noted", numberKeyLabel(5, entered = true, noted = true))
+        assertEquals("Enter", numberKeyAction(notesOn = false, noted = false))
+        assertEquals("Add note", numberKeyAction(notesOn = true, noted = false))
+        assertEquals("Remove note", numberKeyAction(notesOn = true, noted = true))
     }
 
     @Test
