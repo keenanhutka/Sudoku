@@ -49,6 +49,7 @@ import kotlin.random.Random
 
 private val ToolHeight = 56.dp
 private val ToolShape = RoundedCornerShape(8.dp)
+private const val BlockedNote = "That number is already in this row, column, or box."
 
 /** The opening screen. Tap a square, then tap a number to write it. */
 @Composable
@@ -94,14 +95,15 @@ fun HomeScreen() {
             if (game.board[index] != 0) return@onDigit
             val next = game.toggleNote(index, number)
             if (next === game && number !in game.notesAt(index)) {
-                checkMessage = "That number is already in this row, column, or box."
+                checkMessage = BlockedNote
                 return@onDigit
             }
             game = next
+            if (checkMessage == BlockedNote) checkMessage = null
         } else {
             game = game.enterDigit(index, number)
+            clearNotice()
         }
-        clearNotice()
     }
     val onErase: () -> Unit = onErase@{
         val index = selected ?: return@onErase
@@ -146,8 +148,14 @@ fun HomeScreen() {
                 canErase = canErase,
                 canUndo = game.canUndo(),
                 debuggable = debuggable,
-                onSelect = { index -> selected = if (selected == index) null else index },
-                onNotes = { notesOn = !notesOn },
+                onSelect = { index ->
+                    selected = if (selected == index) null else index
+                    if (checkMessage == BlockedNote) checkMessage = null
+                },
+                onNotes = {
+                    notesOn = !notesOn
+                    if (checkMessage == BlockedNote) checkMessage = null
+                },
                 onUndo = onUndo,
                 onCheck = onCheck,
                 onFill = onFill,
