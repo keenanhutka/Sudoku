@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.keenanhutka.seniorsudoku.engine.Board
@@ -340,7 +341,7 @@ private fun PlayScreen(
         val sideways = maxWidth > maxHeight
         val screenWidth = maxWidth
         val screenHeight = maxHeight
-        val toolRows = if (debuggable) 4 else 3
+        val toolRows = if (debuggable) 3 else 2
         val toolHeight = ToolHeight * toolRows + 8.dp * (toolRows - 1)
         if (sideways) {
             Row(
@@ -461,17 +462,20 @@ private fun PlayTools(
                 modifier = Modifier.weight(1f).height(ToolHeight),
             )
         }
-        ToolButton(
-            text = "Hint",
-            action = "Show a hint",
-            onClick = onHint,
-            modifier = Modifier.fillMaxWidth().height(ToolHeight),
-        )
-        ToolButton(
-            text = "Check my numbers",
-            onClick = onCheck,
-            modifier = Modifier.fillMaxWidth().height(ToolHeight),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ToolButton(
+                text = "Hint",
+                action = "Show a hint",
+                onClick = onHint,
+                modifier = Modifier.widthIn(min = 88.dp).height(ToolHeight),
+            )
+            ToolButton(
+                text = "Check my numbers",
+                onClick = onCheck,
+                modifier = Modifier.weight(1f).height(ToolHeight),
+                fontSize = 18.sp,
+            )
+        }
         if (debuggable) {
             ToolButton(
                 text = "Fill solution",
@@ -490,6 +494,7 @@ private fun ToolButton(
     enabled: Boolean = true,
     filled: Boolean = false,
     action: String = text,
+    fontSize: TextUnit = 20.sp,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val paper = MaterialTheme.colorScheme.background
@@ -508,8 +513,8 @@ private fun ToolButton(
             text = text,
             modifier = Modifier.clearAndSetSemantics {},
             color = if (filled) onFill else ink,
-            fontSize = 20.sp,
-            lineHeight = 20.sp,
+            fontSize = fontSize,
+            lineHeight = fontSize,
             letterSpacing = 0.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -567,7 +572,7 @@ private fun ScreenHeader(
         Text(
             text = checkMessage,
             modifier = Modifier
-                .heightIn(max = 88.dp)
+                .heightIn(max = 56.dp)
                 .verticalScroll(noticeScroll)
                 .semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
