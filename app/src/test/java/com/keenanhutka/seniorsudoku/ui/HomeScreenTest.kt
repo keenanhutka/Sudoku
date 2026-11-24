@@ -43,5 +43,8 @@ class HomeScreenTest {
         assertEquals(34 to false, selectionAfterTap(selected = 34, tapped = 34, hintShowing = true))
         assertEquals(0 to true, selectionAfterTap(selected = 34, tapped = 0, hintShowing = true))
         assertEquals(null to false, selectionAfterTap(selected = 34, tapped = 34, hintShowing = false))
+        assertEquals(56f, noticeHeight(linePx = 28f, capPx = 56f), 0f)
+        assertEquals(36f, noticeHeight(linePx = 36f, capPx = 56f), 0f)
+        assertEquals(70f, noticeHeight(linePx = 70f, capPx = 56f), 0f)
     }
 }

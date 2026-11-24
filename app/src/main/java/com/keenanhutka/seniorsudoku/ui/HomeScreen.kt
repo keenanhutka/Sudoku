@@ -98,6 +98,13 @@ internal fun selectionAfterTap(selected: Int?, tapped: Int, hintShowing: Boolean
     return next to hintShowing
 }
 
+/** How tall the hint box is, in pixels. Never slices a line in half. */
+internal fun noticeHeight(linePx: Float, capPx: Float): Float {
+    if (linePx <= 0f || capPx <= 0f) return capPx.coerceAtLeast(0f)
+    val lines = (capPx / linePx).toInt().coerceAtLeast(1)
+    return linePx * lines
+}
+
 private enum class Page { Home, Loading, Play }
 
 /** A choice on the home screen. Today's puzzle is the same puzzle all day. */
@@ -569,10 +576,15 @@ private fun ScreenHeader(
     )
     if (checkMessage != null) {
         val noticeScroll = remember(checkMessage) { ScrollState(0) }
+        val noticeMax = with(LocalDensity.current) {
+            val line = MaterialTheme.typography.titleLarge.lineHeight
+            val linePx = if (line == TextUnit.Unspecified) 0f else line.toPx()
+            noticeHeight(linePx, 56.dp.toPx()).toDp()
+        }
         Text(
             text = checkMessage,
             modifier = Modifier
-                .heightIn(max = 56.dp)
+                .heightIn(max = noticeMax)
                 .verticalScroll(noticeScroll)
                 .semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
