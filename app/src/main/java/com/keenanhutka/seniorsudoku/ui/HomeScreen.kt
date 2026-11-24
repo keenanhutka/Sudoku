@@ -35,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -70,6 +71,12 @@ private const val CouldNotMake = "Could not make a puzzle. Try again."
 internal const val LeaveWarning = "This puzzle is not saved yet."
 internal const val HintMistake = "A number is wrong. Fix it before a hint."
 internal const val NoHint = "No simple hint right now."
+
+/** True when the sentence is asking the player to fix a wrong number. */
+internal fun askingToFix(message: String?): Boolean {
+    if (message == null) return false
+    return message == HintMistake || message.endsWith("wrong.")
+}
 
 /** The sentence Hint shows. A wrong number blocks the hint. */
 internal fun hintMessage(result: HintResult?): String = when (result) {
@@ -252,10 +259,15 @@ fun HomeScreen() {
     }
     val onCheck: () -> Unit = onCheck@{
         val playing = game ?: return@onCheck
-        val message = mistakeMessage(playing.wrongCells().size, unfinished = !playing.isComplete())
+        val wrongs = playing.wrongCells()
+        val message = mistakeMessage(wrongs.size, unfinished = !playing.isComplete())
         checkMessage = message
         noticeIsError = !message.startsWith("No mistakes")
         hintShowing = false
+        if (wrongs.isNotEmpty()) {
+            selected = wrongs.first()
+            notesOn = false
+        }
     }
     val onHint: () -> Unit = onHint@{
         val playing = game ?: return@onHint
@@ -316,7 +328,7 @@ fun HomeScreen() {
                         selected,
                         index,
                         hintShowing,
-                        mistakeShowing = checkMessage == HintMistake,
+                        mistakeShowing = askingToFix(checkMessage),
                     )
                     selected = next
                     if (clearHint || checkMessage == BlockedNote) {
@@ -325,8 +337,10 @@ fun HomeScreen() {
                     }
                 },
                 onNotes = {
-                    notesOn = !notesOn
-                    if (checkMessage == BlockedNote) checkMessage = null
+                    if (!askingToFix(checkMessage)) {
+                        notesOn = !notesOn
+                        if (checkMessage == BlockedNote) checkMessage = null
+                    }
                 },
                 onUndo = onUndo,
                 onCheck = onCheck,
@@ -394,7 +408,7 @@ private fun PlayScreen(
                         selected = selected,
                         onSelect = onSelect,
                         hintShowing = hintShowing,
-                        mistakeShowing = checkMessage == HintMistake,
+                        mistakeShowing = askingToFix(checkMessage),
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                     )
                 }
@@ -404,6 +418,7 @@ private fun PlayScreen(
                 ) {
                     PlayTools(
                         notesOn = notesOn,
+                        notesEnabled = !askingToFix(checkMessage),
                         canUndo = canUndo,
                         debuggable = debuggable,
                         onNotes = onNotes,
@@ -441,11 +456,12 @@ private fun PlayScreen(
                     selected = selected,
                     onSelect = onSelect,
                     hintShowing = hintShowing,
-                    mistakeShowing = checkMessage == HintMistake,
+                    mistakeShowing = askingToFix(checkMessage),
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                 )
                 PlayTools(
                     notesOn = notesOn,
+                    notesEnabled = !askingToFix(checkMessage),
                     canUndo = canUndo,
                     debuggable = debuggable,
                     onNotes = onNotes,
@@ -475,6 +491,7 @@ private fun PlayScreen(
 @Composable
 private fun PlayTools(
     notesOn: Boolean,
+    notesEnabled: Boolean,
     canUndo: Boolean,
     debuggable: Boolean,
     onNotes: () -> Unit,
@@ -489,6 +506,7 @@ private fun PlayTools(
                 text = if (notesOn) "Notes on" else "Notes off",
                 action = notesButtonAction(notesOn),
                 filled = notesOn,
+                enabled = notesEnabled,
                 onClick = onNotes,
                 modifier = Modifier.weight(1f).height(ToolHeight),
             )
@@ -539,6 +557,7 @@ private fun ToolButton(
     val onFill = MaterialTheme.colorScheme.onPrimary
     Box(
         modifier
+            .alpha(if (enabled) 1f else 0.45f)
             .clip(ToolShape)
             .background(if (filled) fill else paper)
             .border(2.dp, if (filled) fill else ink, ToolShape)
