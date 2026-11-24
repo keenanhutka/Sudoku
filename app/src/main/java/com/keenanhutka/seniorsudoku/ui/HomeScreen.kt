@@ -73,20 +73,21 @@ internal const val NoHint = "No simple hint right now."
 
 /** The sentence Hint shows. A wrong number blocks the hint. */
 internal fun hintMessage(result: HintResult?): String = when (result) {
-    HintResult.MistakeFound -> HintMistake
+    is HintResult.MistakeFound -> HintMistake
     is HintResult.Single -> result.step.sentence
     null -> NoHint
 }
 
-/** The square the hint is talking about. Null when there is no step. */
-internal fun hintIndex(result: HintResult?): Int? {
-    val step = (result as? HintResult.Single)?.step ?: return null
-    return (step.row - 1) * Board.SIZE + (step.column - 1)
+/** The square the hint is talking about. A mistake marks the first wrong square. */
+internal fun hintIndex(result: HintResult?): Int? = when (result) {
+    is HintResult.Single -> (result.step.row - 1) * Board.SIZE + (result.step.column - 1)
+    is HintResult.MistakeFound -> result.index
+    null -> null
 }
 
-/** A hint asks for a number in the square, so notes turn off. Otherwise notes stay. */
+/** A hint or a wrong number needs a digit in the square, so notes turn off. Otherwise notes stay. */
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
-    notesOn && result !is HintResult.Single
+    notesOn && result == null
 
 /**
  * Tapping the square a hint just marked keeps that hint.

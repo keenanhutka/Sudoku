@@ -15,7 +15,7 @@ data class HintStep(
 /** What a hint request found. A wrong filled cell wins over a new hint. */
 sealed class HintResult {
     data class Single(val step: HintStep) : HintResult()
-    data object MistakeFound : HintResult()
+    data class MistakeFound(val index: Int) : HintResult()
 }
 
 /** How far naked and hidden singles got on their own. */
@@ -48,7 +48,7 @@ fun findNextSingle(board: Board): HintStep? {
 fun findHint(board: Board, solution: Board): HintResult? {
     for (index in 0 until Board.CELL_COUNT) {
         val placed = board[index]
-        if (placed != 0 && placed != solution[index]) return HintResult.MistakeFound
+        if (placed != 0 && placed != solution[index]) return HintResult.MistakeFound(index)
     }
     val step = findNextSingle(board) ?: return null
     return HintResult.Single(step)

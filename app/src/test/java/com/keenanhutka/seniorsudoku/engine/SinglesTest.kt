@@ -54,7 +54,7 @@ class SinglesTest {
         val solution = Board.fromText(SOLUTION)
         val wrongDigit = if (solution[0] == 1) 2 else 1
         val wrong = solution.withDigit(0, wrongDigit)
-        assertEquals(HintResult.MistakeFound, findHint(wrong, solution))
+        assertEquals(HintResult.MistakeFound(0), findHint(wrong, solution))
     }
 
     @Test

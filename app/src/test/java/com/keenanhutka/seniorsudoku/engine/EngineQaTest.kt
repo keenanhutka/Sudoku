@@ -105,7 +105,7 @@ class EngineQaTest {
         val solved = Board.fromText(SOLUTION)
         val index = 40
         val wrong = solved.withDigit(index, if (solved[index] == 9) 1 else 9)
-        assertEquals(HintResult.MistakeFound, findHint(wrong, solved))
+        assertEquals(HintResult.MistakeFound(index), findHint(wrong, solved))
         assertNull(findHint(solved, solved))
         val finished = solveWithSinglesOnly(solved)
         assertTrue(finished.solved)
