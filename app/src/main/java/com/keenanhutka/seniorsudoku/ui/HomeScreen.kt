@@ -204,6 +204,17 @@ fun HomeScreen() {
         hintShowing = false
     }
 
+    fun afterNumberChange(next: Game) {
+        game = next
+        val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
+        if (stillWrong != null) {
+            selected = stillWrong
+            hintShowing = false
+        } else {
+            clearNotice()
+        }
+    }
+
     val onDigit: (Int) -> Unit = onDigit@{ number ->
         val playing = game ?: return@onDigit
         val index = selected ?: return@onDigit
@@ -222,14 +233,7 @@ fun HomeScreen() {
         } else {
             val next = playing.enterDigit(index, number)
             if (next === playing) return@onDigit
-            game = next
-            val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
-            if (stillWrong != null) {
-                selected = stillWrong
-                hintShowing = false
-            } else {
-                clearNotice()
-            }
+            afterNumberChange(next)
         }
     }
     val onErase: () -> Unit = onErase@{
@@ -238,22 +242,13 @@ fun HomeScreen() {
         if (playing.isGiven(index)) return@onErase
         val next = playing.clearCell(index)
         if (next === playing) return@onErase
-        game = next
-        val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
-        if (stillWrong != null) {
-            selected = stillWrong
-            hintShowing = false
-        } else {
-            clearNotice()
-        }
+        afterNumberChange(next)
     }
     val onUndo: () -> Unit = onUndo@{
         val playing = game ?: return@onUndo
         val next = playing.undo()
-        if (next !== playing) {
-            game = next
-            clearNotice()
-        }
+        if (next === playing) return@onUndo
+        afterNumberChange(next)
     }
     val onCheck: () -> Unit = onCheck@{
         val playing = game ?: return@onCheck
