@@ -194,9 +194,9 @@ class EngineQaTest {
             else -> {
                 val startRow = house / 3 * 3 + 1
                 val startColumn = house % 3 * 3 + 1
-                "In the box covering rows $startRow to ${startRow + 2} and columns " +
-                    "$startColumn to ${startColumn + 2}, the digit $digit has only one place to go: " +
-                    "row $row, column $column."
+                val article = if (digit == 8) "an" else "a"
+                "Row $row, column $column is the only place for $article $digit in the box " +
+                    "on rows $startRow to ${startRow + 2}, columns $startColumn to ${startColumn + 2}."
             }
         }
         return HintStep("Hidden single", row, column, digit, sentence)
