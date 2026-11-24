@@ -58,6 +58,7 @@ fun SudokuBoard(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     hintShowing: Boolean = false,
+    mistakeShowing: Boolean = false,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val peerWash = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
@@ -83,6 +84,7 @@ fun SudokuBoard(
                     peerWash = peerWash,
                     onSelect = onSelect,
                     hintShowing = hintShowing,
+                    mistakeShowing = mistakeShowing,
                 )
             }
         }
@@ -208,6 +210,7 @@ private fun Squares(
     peerWash: Color,
     onSelect: (Int) -> Unit,
     hintShowing: Boolean,
+    mistakeShowing: Boolean,
 ) {
     Layout(
         modifier = Modifier.fillMaxSize(),
@@ -227,6 +230,7 @@ private fun Squares(
                     ),
                     onSelect = onSelect,
                     hintShowing = hintShowing,
+                    mistakeShowing = mistakeShowing,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -261,6 +265,7 @@ private fun Square(
     wash: Color,
     onSelect: (Int) -> Unit,
     hintShowing: Boolean,
+    mistakeShowing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val digit = game.board[index]
@@ -297,7 +302,7 @@ private fun Square(
     Box(
         modifier = modifier
             .background(wash)
-            .clickable(onClickLabel = cellTapAction(marked, hintShowing)) { onSelect(index) }
+            .clickable(onClickLabel = cellTapAction(marked, hintShowing, mistakeShowing)) { onSelect(index) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {

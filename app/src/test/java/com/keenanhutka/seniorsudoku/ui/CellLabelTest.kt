@@ -52,6 +52,7 @@ class CellLabelTest {
         assertEquals("Select", selectionAction(false))
         assertEquals("Deselect", selectionAction(true))
         assertEquals("Keep the hint", cellTapAction(marked = true, hintShowing = true))
+        assertEquals("Keep this square", cellTapAction(marked = true, hintShowing = false, mistakeShowing = true))
         assertEquals("Deselect", cellTapAction(marked = true, hintShowing = false))
         assertEquals("Select", cellTapAction(marked = false, hintShowing = true))
     }

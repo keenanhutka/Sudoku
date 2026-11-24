@@ -90,13 +90,28 @@ internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result == null
 
 /**
- * Tapping the square a hint just marked keeps that hint.
- * Any other tap moves the mark. The second value is true when the hint should go away.
+ * Tapping the marked square keeps a hint or a wrong-number warning.
+ * Moving to another square clears a hint. A wrong number stays wrong, so that warning stays.
+ * The second value is true when the hint sentence should go away.
  */
-internal fun selectionAfterTap(selected: Int?, tapped: Int, hintShowing: Boolean): Pair<Int?, Boolean> {
-    if (hintShowing && selected == tapped) return selected to false
+internal fun selectionAfterTap(
+    selected: Int?,
+    tapped: Int,
+    hintShowing: Boolean,
+    mistakeShowing: Boolean = false,
+): Pair<Int?, Boolean> {
+    if ((hintShowing || mistakeShowing) && selected == tapped) return selected to false
     val next = if (selected == tapped) null else tapped
-    return next to hintShowing
+    return next to (hintShowing && next != selected)
+}
+
+/**
+ * After a number changes, keep the warning only while a wrong number remains.
+ * The result is the square to mark, or null when the warning should go away.
+ */
+internal fun mistakeMarkAfterChange(message: String?, wrongCells: List<Int>): Int? {
+    if (message != HintMistake) return null
+    return wrongCells.firstOrNull()
 }
 
 /** How tall the hint box is, in pixels. Never slices a line in half. */
@@ -208,7 +223,13 @@ fun HomeScreen() {
             val next = playing.enterDigit(index, number)
             if (next === playing) return@onDigit
             game = next
-            clearNotice()
+            val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
+            if (stillWrong != null) {
+                selected = stillWrong
+                hintShowing = false
+            } else {
+                clearNotice()
+            }
         }
     }
     val onErase: () -> Unit = onErase@{
@@ -218,7 +239,13 @@ fun HomeScreen() {
         val next = playing.clearCell(index)
         if (next === playing) return@onErase
         game = next
-        clearNotice()
+        val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
+        if (stillWrong != null) {
+            selected = stillWrong
+            hintShowing = false
+        } else {
+            clearNotice()
+        }
     }
     val onUndo: () -> Unit = onUndo@{
         val playing = game ?: return@onUndo
@@ -290,7 +317,12 @@ fun HomeScreen() {
                 debuggable = debuggable,
                 hintShowing = hintShowing,
                 onSelect = { index ->
-                    val (next, clearHint) = selectionAfterTap(selected, index, hintShowing)
+                    val (next, clearHint) = selectionAfterTap(
+                        selected,
+                        index,
+                        hintShowing,
+                        mistakeShowing = checkMessage == HintMistake,
+                    )
                     selected = next
                     if (clearHint || checkMessage == BlockedNote) {
                         checkMessage = null
@@ -367,6 +399,7 @@ private fun PlayScreen(
                         selected = selected,
                         onSelect = onSelect,
                         hintShowing = hintShowing,
+                        mistakeShowing = checkMessage == HintMistake,
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                     )
                 }
@@ -413,6 +446,7 @@ private fun PlayScreen(
                     selected = selected,
                     onSelect = onSelect,
                     hintShowing = hintShowing,
+                    mistakeShowing = checkMessage == HintMistake,
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                 )
                 PlayTools(
