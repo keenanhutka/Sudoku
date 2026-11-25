@@ -92,7 +92,10 @@ internal fun hintIndex(result: HintResult?): Int? = when (result) {
     null -> null
 }
 
-/** A hint or a wrong number needs a digit in the square, so notes turn off. Otherwise notes stay. */
+/** Notes stay off while a hint or a wrong-number warning is showing. */
+internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
+    hintShowing || askingToFix(message)
+
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result == null
 
@@ -248,7 +251,7 @@ fun HomeScreen() {
         val playing = game ?: return@onDigit
         val index = selected ?: return@onDigit
         if (playing.isGiven(index)) return@onDigit
-        if (notesOn) {
+        if (notesOn && !hintShowing) {
             if (playing.board[index] != 0) return@onDigit
             val next = playing.toggleNote(index, number)
             if (next === playing && number !in playing.notesAt(index)) {
@@ -359,7 +362,7 @@ fun HomeScreen() {
                     }
                 },
                 onNotes = {
-                    if (!askingToFix(checkMessage)) {
+                    if (!notesLocked(checkMessage, hintShowing)) {
                         notesOn = !notesOn
                         if (checkMessage == BlockedNote) checkMessage = null
                     }
@@ -440,7 +443,7 @@ private fun PlayScreen(
                 ) {
                     PlayTools(
                         notesOn = notesOn,
-                        notesEnabled = !askingToFix(checkMessage),
+                        notesEnabled = !notesLocked(checkMessage, hintShowing),
                         canUndo = canUndo,
                         debuggable = debuggable,
                         onNotes = onNotes,
@@ -483,7 +486,7 @@ private fun PlayScreen(
                 )
                 PlayTools(
                     notesOn = notesOn,
-                    notesEnabled = !askingToFix(checkMessage),
+                    notesEnabled = !notesLocked(checkMessage, hintShowing),
                     canUndo = canUndo,
                     debuggable = debuggable,
                     onNotes = onNotes,
