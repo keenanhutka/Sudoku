@@ -113,12 +113,28 @@ internal fun selectionAfterTap(
 }
 
 /**
- * After a number changes, keep the warning only while a wrong number remains.
- * The result is the square to mark, or null when the warning should go away.
+ * After a number changes, keep a wrong-number warning only while one remains.
+ * A check count is updated. A hint about the next step goes away.
  */
-internal fun mistakeMarkAfterChange(message: String?, wrongCells: List<Int>): Int? {
-    if (message != HintMistake) return null
-    return wrongCells.firstOrNull()
+internal data class NoticeUpdate(val message: String?, val mark: Int?)
+
+internal fun noticeAfterChange(
+    message: String?,
+    wrongCells: List<Int>,
+    unfinished: Boolean,
+): NoticeUpdate {
+    val mark = wrongCells.firstOrNull()
+    if (message == HintMistake) {
+        return if (mark != null) NoticeUpdate(HintMistake, mark) else NoticeUpdate(null, null)
+    }
+    if (askingToFix(message)) {
+        return if (mark != null) {
+            NoticeUpdate(mistakeMessage(wrongCells.size, unfinished), mark)
+        } else {
+            NoticeUpdate(null, null)
+        }
+    }
+    return NoticeUpdate(null, null)
 }
 
 /** How tall the hint box is, in pixels. Never slices a line in half. */
@@ -213,10 +229,12 @@ fun HomeScreen() {
 
     fun afterNumberChange(next: Game) {
         game = next
-        val stillWrong = mistakeMarkAfterChange(checkMessage, next.wrongCells())
-        if (stillWrong != null) {
-            selected = stillWrong
+        val update = noticeAfterChange(checkMessage, next.wrongCells(), unfinished = !next.isComplete())
+        if (update.message != null) {
+            checkMessage = update.message
+            noticeIsError = true
             hintShowing = false
+            if (update.mark != null) selected = update.mark
         } else {
             clearNotice()
         }
@@ -557,7 +575,7 @@ private fun ToolButton(
     val onFill = MaterialTheme.colorScheme.onPrimary
     Box(
         modifier
-            .alpha(if (enabled) 1f else 0.45f)
+            .alpha(if (enabled) 1f else 0.72f)
             .clip(ToolShape)
             .background(if (filled) fill else paper)
             .border(2.dp, if (filled) fill else ink, ToolShape)
