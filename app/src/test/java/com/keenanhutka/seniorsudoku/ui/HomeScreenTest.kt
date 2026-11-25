@@ -1,5 +1,6 @@
 package com.keenanhutka.seniorsudoku.ui
 
+import com.keenanhutka.seniorsudoku.engine.Board
 import com.keenanhutka.seniorsudoku.engine.HintResult
 import com.keenanhutka.seniorsudoku.engine.HintStep
 import com.keenanhutka.seniorsudoku.engine.Level
@@ -70,6 +71,9 @@ class HomeScreenTest {
         assertTrue(notesLocked("Row 4, column 8 can only be a 2.", hintShowing = true))
         assertFalse(notesLocked("Row 4, column 8 can only be a 2.", hintShowing = false))
         assertFalse(notesLocked(null, hintShowing = false))
+        val empty = Board.fromText("0".repeat(Board.CELL_COUNT))
+        assertTrue(sameDigits(empty, empty))
+        assertFalse(sameDigits(empty, empty.withDigit(0, 2)))
         assertEquals(56f, noticeHeight(linePx = 28f, capPx = 56f), 0f)
         assertEquals(36f, noticeHeight(linePx = 36f, capPx = 56f), 0f)
         assertEquals(70f, noticeHeight(linePx = 70f, capPx = 56f), 0f)

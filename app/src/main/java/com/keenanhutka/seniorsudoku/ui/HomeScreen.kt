@@ -92,7 +92,14 @@ internal fun hintIndex(result: HintResult?): Int? = when (result) {
     null -> null
 }
 
-/** Notes stay off while a hint or a wrong-number warning is showing. */
+/** A note change does not erase a hint. A new or removed number does. */
+internal fun sameDigits(before: Board, after: Board): Boolean {
+    for (index in 0 until Board.CELL_COUNT) {
+        if (before[index] != after[index]) return false
+    }
+    return true
+}
+
 internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
     hintShowing || askingToFix(message)
 
@@ -274,12 +281,20 @@ fun HomeScreen() {
         if (playing.isGiven(index)) return@onErase
         val next = playing.clearCell(index)
         if (next === playing) return@onErase
+        if (hintShowing && sameDigits(playing.board, next.board)) {
+            game = next
+            return@onErase
+        }
         afterNumberChange(next)
     }
     val onUndo: () -> Unit = onUndo@{
         val playing = game ?: return@onUndo
         val next = playing.undo()
         if (next === playing) return@onUndo
+        if (hintShowing && sameDigits(playing.board, next.board)) {
+            game = next
+            return@onUndo
+        }
         afterNumberChange(next)
     }
     val onCheck: () -> Unit = onCheck@{
