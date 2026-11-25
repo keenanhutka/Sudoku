@@ -122,8 +122,9 @@ internal fun noticeAfterChange(
     message: String?,
     wrongCells: List<Int>,
     unfinished: Boolean,
+    selected: Int? = null,
 ): NoticeUpdate {
-    val mark = wrongCells.firstOrNull()
+    val mark = if (selected != null && selected in wrongCells) selected else wrongCells.firstOrNull()
     if (message == HintMistake) {
         return if (mark != null) NoticeUpdate(HintMistake, mark) else NoticeUpdate(null, null)
     }
@@ -229,7 +230,12 @@ fun HomeScreen() {
 
     fun afterNumberChange(next: Game) {
         game = next
-        val update = noticeAfterChange(checkMessage, next.wrongCells(), unfinished = !next.isComplete())
+        val update = noticeAfterChange(
+            checkMessage,
+            next.wrongCells(),
+            unfinished = !next.isComplete(),
+            selected = selected,
+        )
         if (update.message != null) {
             checkMessage = update.message
             noticeIsError = true

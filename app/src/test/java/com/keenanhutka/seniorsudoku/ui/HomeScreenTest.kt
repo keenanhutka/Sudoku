@@ -52,6 +52,8 @@ class HomeScreenTest {
         val counted = noticeAfterChange("1 number looks wrong.", listOf(4, 9), unfinished = true)
         assertEquals("2 numbers look wrong.", counted.message)
         assertEquals(4, counted.mark)
+        assertEquals(9, noticeAfterChange("1 number looks wrong.", listOf(4, 9), unfinished = true, selected = 9).mark)
+        assertEquals(4, noticeAfterChange("1 number looks wrong.", listOf(4, 9), unfinished = true, selected = 3).mark)
         assertEquals(null, noticeAfterChange("1 number looks wrong.", emptyList(), unfinished = true).message)
         assertEquals(null, noticeAfterChange("Row 4 can only be a 2.", listOf(4), unfinished = true).message)
         assertTrue(askingToFix(HintMistake))
