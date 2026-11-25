@@ -123,19 +123,14 @@ internal fun noticeAfterChange(
     wrongCells: List<Int>,
     unfinished: Boolean,
     selected: Int? = null,
+    selectedDigit: Int = -1,
 ): NoticeUpdate {
-    val mark = if (selected != null && selected in wrongCells) selected else wrongCells.firstOrNull()
-    if (message == HintMistake) {
-        return if (mark != null) NoticeUpdate(HintMistake, mark) else NoticeUpdate(null, null)
-    }
-    if (askingToFix(message)) {
-        return if (mark != null) {
-            NoticeUpdate(mistakeMessage(wrongCells.size, unfinished), mark)
-        } else {
-            NoticeUpdate(null, null)
-        }
-    }
-    return NoticeUpdate(null, null)
+    if (message != HintMistake && !askingToFix(message)) return NoticeUpdate(null, null)
+    if (wrongCells.isEmpty()) return NoticeUpdate(null, null)
+    val stay = selected != null && (selected in wrongCells || selectedDigit == 0)
+    val mark = if (stay) selected else wrongCells.first()
+    val text = if (message == HintMistake) HintMistake else mistakeMessage(wrongCells.size, unfinished)
+    return NoticeUpdate(text, mark)
 }
 
 /** How tall the hint box is, in pixels. Never slices a line in half. */
@@ -230,11 +225,14 @@ fun HomeScreen() {
 
     fun afterNumberChange(next: Game) {
         game = next
+        val index = selected
+        val digitNow = if (index != null) next.board[index] else -1
         val update = noticeAfterChange(
             checkMessage,
             next.wrongCells(),
             unfinished = !next.isComplete(),
-            selected = selected,
+            selected = index,
+            selectedDigit = digitNow,
         )
         if (update.message != null) {
             checkMessage = update.message
