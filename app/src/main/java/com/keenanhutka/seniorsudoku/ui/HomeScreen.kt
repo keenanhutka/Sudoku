@@ -92,12 +92,23 @@ internal fun hintIndex(result: HintResult?): Int? = when (result) {
     null -> null
 }
 
-/** A note change does not erase a hint. A new or removed number does. */
-internal fun sameDigits(before: Board, after: Board): Boolean {
+/**
+ * Keep a hint when only the marked square changed, and it is empty or wrong.
+ * A wrong number stays under the hint so Notes cannot hide the number keys.
+ */
+internal fun keepTeachingHint(
+    hintShowing: Boolean,
+    before: Board,
+    after: Board,
+    selected: Int?,
+    selectedWrong: Boolean,
+): Boolean {
+    if (!hintShowing || selected == null || selected !in 0 until Board.CELL_COUNT) return false
     for (index in 0 until Board.CELL_COUNT) {
+        if (index == selected) continue
         if (before[index] != after[index]) return false
     }
-    return true
+    return after[selected] == 0 || selectedWrong
 }
 
 internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
@@ -234,8 +245,15 @@ fun HomeScreen() {
     }
 
     fun afterNumberChange(next: Game) {
-        game = next
+        val wasHint = hintShowing
         val index = selected
+        val before = game
+        game = next
+        val selectedWrong = index != null && next.isWrong(index)
+        if (before != null && keepTeachingHint(wasHint, before.board, next.board, index, selectedWrong)) {
+            notesOn = false
+            return
+        }
         val digitNow = if (index != null) next.board[index] else -1
         val update = noticeAfterChange(
             checkMessage,
@@ -281,20 +299,12 @@ fun HomeScreen() {
         if (playing.isGiven(index)) return@onErase
         val next = playing.clearCell(index)
         if (next === playing) return@onErase
-        if (hintShowing && sameDigits(playing.board, next.board)) {
-            game = next
-            return@onErase
-        }
         afterNumberChange(next)
     }
     val onUndo: () -> Unit = onUndo@{
         val playing = game ?: return@onUndo
         val next = playing.undo()
         if (next === playing) return@onUndo
-        if (hintShowing && sameDigits(playing.board, next.board)) {
-            game = next
-            return@onUndo
-        }
         afterNumberChange(next)
     }
     val onCheck: () -> Unit = onCheck@{
