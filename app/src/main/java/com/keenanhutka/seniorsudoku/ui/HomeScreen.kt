@@ -119,13 +119,6 @@ internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
     hintShowing || askingToFix(message)
 
 /**
- * A teaching hint stays while that square is wrong.
- * Hint or Check must not replace it with a shorter warning.
- */
-internal fun protectTeachingHint(hintShowing: Boolean, selectedWrong: Boolean): Boolean =
-    hintShowing && selectedWrong
-
-/**
  * The teaching hint did not stay, and a wrong number is on the board.
  * Show the warning instead of leaving that number with no message.
  */
@@ -348,9 +341,8 @@ fun HomeScreen() {
         }
     }
     val onHint: () -> Unit = onHint@{
+        if (hintShowing) return@onHint
         val playing = game ?: return@onHint
-        val marked = selected
-        if (protectTeachingHint(hintShowing, marked != null && playing.isWrong(marked))) return@onHint
         val result = findHint(playing.board, playing.solution)
         checkMessage = hintMessage(result)
         noticeIsError = result is HintResult.MistakeFound
@@ -511,7 +503,7 @@ private fun PlayScreen(
                         notesOn = notesOn,
                         notesEnabled = !notesLocked(checkMessage, hintShowing),
                         reviewEnabled = !hintShowing,
-                        hintEnabled = !protectTeachingHint(hintShowing, wrong),
+                        hintEnabled = !hintShowing,
                         canUndo = canUndo,
                         debuggable = debuggable,
                         onNotes = onNotes,
@@ -556,7 +548,7 @@ private fun PlayScreen(
                     notesOn = notesOn,
                     notesEnabled = !notesLocked(checkMessage, hintShowing),
                     reviewEnabled = !hintShowing,
-                    hintEnabled = !protectTeachingHint(hintShowing, wrong),
+                    hintEnabled = !hintShowing,
                     canUndo = canUndo,
                     debuggable = debuggable,
                     onNotes = onNotes,
