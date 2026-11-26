@@ -81,6 +81,8 @@ class HomeScreenTest {
         assertTrue(warningAfterLeavingHint(clearHint = true, leftCellWrong = true))
         assertFalse(warningAfterLeavingHint(clearHint = true, leftCellWrong = false))
         assertFalse(warningAfterLeavingHint(clearHint = false, leftCellWrong = true))
+        assertTrue(keepCurrentHint(hintShowing = true))
+        assertFalse(keepCurrentHint(hintShowing = false))
         assertEquals(56f, noticeHeight(linePx = 28f, capPx = 56f), 0f)
         assertEquals(36f, noticeHeight(linePx = 36f, capPx = 56f), 0f)
         assertEquals(70f, noticeHeight(linePx = 70f, capPx = 56f), 0f)

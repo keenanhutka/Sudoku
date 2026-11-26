@@ -118,6 +118,9 @@ internal fun warningAfterLeavingHint(clearHint: Boolean, leftCellWrong: Boolean)
 internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
     hintShowing || askingToFix(message)
 
+/** A hint already on screen stays. Asking again must not replace that sentence. */
+internal fun keepCurrentHint(hintShowing: Boolean): Boolean = hintShowing
+
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result == null
 
@@ -324,6 +327,7 @@ fun HomeScreen() {
         }
     }
     val onHint: () -> Unit = onHint@{
+        if (keepCurrentHint(hintShowing)) return@onHint
         val playing = game ?: return@onHint
         val result = findHint(playing.board, playing.solution)
         checkMessage = hintMessage(result)
