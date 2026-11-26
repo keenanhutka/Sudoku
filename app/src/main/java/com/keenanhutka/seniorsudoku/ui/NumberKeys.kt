@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -59,10 +60,12 @@ internal fun digitKeyEnabled(
     notesOn: Boolean,
     alreadyEntered: Boolean,
     wrong: Boolean = false,
+    heldOff: Boolean = false,
 ): Boolean {
     if (!padEnabled) return false
     if (notesOn) return true
     if (alreadyEntered && wrong) return true
+    if (heldOff) return false
     return !alreadyEntered
 }
 
@@ -129,6 +132,7 @@ fun NumberKeys(
     notesOn: Boolean = false,
     notedDigits: Set<Int> = emptySet(),
     given: Boolean = false,
+    heldOffDigit: Int = 0,
 ) {
     val height = fittedHeight(maxHeight)
     // 1 stays on the left even when the phone language is right to left.
@@ -137,9 +141,9 @@ fun NumberKeys(
             modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
-            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
-            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, onDigit, height)
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
             WordKey(
                 text = "Erase",
                 enabled = eraseEnabled,
@@ -180,6 +184,7 @@ private fun DigitRow(
     notesOn: Boolean,
     notedDigits: Set<Int>,
     given: Boolean,
+    heldOffDigit: Int,
     onDigit: (Int) -> Unit,
     height: Dp,
 ) {
@@ -190,9 +195,11 @@ private fun DigitRow(
         for (digit in digits) {
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
+            val held = heldOffDigit != 0 && digit == heldOffDigit
             DigitKey(
                 digit = digit,
-                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong),
+                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held),
+                quiet = held && !notesOn,
                 entered = entered,
                 wrong = wrong,
                 noted = notesOn && entered,
@@ -211,6 +218,7 @@ private fun DigitKey(
     enabled: Boolean,
     entered: Boolean,
     wrong: Boolean,
+    quiet: Boolean,
     noted: Boolean,
     notesOn: Boolean,
     given: Boolean,
@@ -224,6 +232,7 @@ private fun DigitKey(
         enabled = enabled,
         entered = entered,
         wrong = wrong,
+        quiet = quiet,
         onClick = onClick,
         modifier = modifier,
         fontSize = DigitText,
@@ -244,6 +253,7 @@ private fun WordKey(
         enabled = enabled,
         entered = false,
         wrong = false,
+        quiet = false,
         onClick = onClick,
         modifier = modifier,
         fontSize = WordText,
@@ -258,6 +268,7 @@ private fun KeyFace(
     enabled: Boolean,
     entered: Boolean,
     wrong: Boolean,
+    quiet: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
     fontSize: TextUnit,
@@ -279,6 +290,7 @@ private fun KeyFace(
     }
     Box(
         modifier
+            .alpha(if (quiet) 0.72f else 1f)
             .clip(KeyShape)
             .background(if (entered && !outlined) fill else paper)
             .border(2.dp, borderColor, KeyShape)

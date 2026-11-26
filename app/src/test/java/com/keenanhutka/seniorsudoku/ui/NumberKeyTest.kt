@@ -30,6 +30,8 @@ class NumberKeyTest {
         assertFalse(digitKeyEnabled(padEnabled = false, notesOn = false, alreadyEntered = false))
         assertFalse(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true, wrong = true))
+        assertFalse(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = false, heldOff = true))
+        assertTrue(digitKeyEnabled(padEnabled = true, notesOn = true, alreadyEntered = false, heldOff = true))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = false))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = true, alreadyEntered = true))
         assertTrue(wrongKeyOutlined(wrong = true))
