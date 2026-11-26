@@ -31,9 +31,8 @@ class NumberKeyTest {
         assertFalse(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = false))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = true, alreadyEntered = true))
-        assertTrue(dimWrongKey(enabled = false, wrong = true))
-        assertFalse(dimWrongKey(enabled = true, wrong = true))
-        assertFalse(dimWrongKey(enabled = false, wrong = false))
+        assertTrue(wrongKeyOutlined(wrong = true))
+        assertFalse(wrongKeyOutlined(wrong = false))
     }
 
     @Test

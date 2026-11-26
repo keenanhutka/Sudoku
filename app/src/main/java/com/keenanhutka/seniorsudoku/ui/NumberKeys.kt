@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -60,8 +59,8 @@ internal fun digitKeyEnabled(padEnabled: Boolean, notesOn: Boolean, alreadyEnter
     return notesOn || !alreadyEntered
 }
 
-/** A wrong number stays red, but the key is dim because tapping it does nothing. */
-internal fun dimWrongKey(enabled: Boolean, wrong: Boolean): Boolean = wrong && !enabled
+/** A wrong number is outlined, not filled, so the key does not look tappable. */
+internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
 /** What TalkBack reads for one number key. */
 internal fun numberKeyLabel(
@@ -256,14 +255,23 @@ private fun KeyFace(
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val paper = MaterialTheme.colorScheme.background
-    val fill = if (wrong) WrongInk else MaterialTheme.colorScheme.primary
+    val fill = MaterialTheme.colorScheme.primary
     val onFill = MaterialTheme.colorScheme.onPrimary
-    val borderColor = if (entered) fill else ink
+    val outlined = wrongKeyOutlined(wrong)
+    val borderColor = when {
+        outlined -> WrongInk
+        entered -> fill
+        else -> ink
+    }
+    val textColor = when {
+        outlined -> WrongInk
+        entered -> onFill
+        else -> ink
+    }
     Box(
         modifier
-            .alpha(if (dimWrongKey(enabled, wrong)) 0.72f else 1f)
             .clip(KeyShape)
-            .background(if (entered) fill else paper)
+            .background(if (entered && !outlined) fill else paper)
             .border(2.dp, borderColor, KeyShape)
             .clickable(enabled = enabled, onClickLabel = action, onClick = onClick)
             .semantics { contentDescription = description },
@@ -272,7 +280,7 @@ private fun KeyFace(
         Text(
             text = text,
             modifier = Modifier.clearAndSetSemantics {},
-            color = if (entered) onFill else ink,
+            color = textColor,
             fontSize = fontSize,
             lineHeight = fontSize,
             letterSpacing = 0.sp,
