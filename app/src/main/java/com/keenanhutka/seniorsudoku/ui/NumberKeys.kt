@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -58,6 +59,9 @@ internal fun digitKeyEnabled(padEnabled: Boolean, notesOn: Boolean, alreadyEnter
     if (!padEnabled) return false
     return notesOn || !alreadyEntered
 }
+
+/** A wrong number stays red, but the key is dim because tapping it does nothing. */
+internal fun dimWrongKey(enabled: Boolean, wrong: Boolean): Boolean = wrong && !enabled
 
 /** What TalkBack reads for one number key. */
 internal fun numberKeyLabel(
@@ -257,6 +261,7 @@ private fun KeyFace(
     val borderColor = if (entered) fill else ink
     Box(
         modifier
+            .alpha(if (dimWrongKey(enabled, wrong)) 0.72f else 1f)
             .clip(KeyShape)
             .background(if (entered) fill else paper)
             .border(2.dp, borderColor, KeyShape)
