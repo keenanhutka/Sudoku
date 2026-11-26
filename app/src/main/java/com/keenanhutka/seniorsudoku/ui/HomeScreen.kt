@@ -296,6 +296,12 @@ fun HomeScreen() {
         val playing = game ?: return@onDigit
         val index = selected ?: return@onDigit
         if (playing.isGiven(index)) return@onDigit
+        if (!notesOn && playing.isWrong(index) && playing.board[index] == number) {
+            val next = playing.clearCell(index)
+            if (next === playing) return@onDigit
+            afterNumberChange(next)
+            return@onDigit
+        }
         if (notesOn && !hintShowing) {
             if (playing.board[index] != 0) return@onDigit
             val next = playing.toggleNote(index, number)

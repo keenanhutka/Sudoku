@@ -53,13 +53,20 @@ internal fun canEraseCell(hasSelection: Boolean, given: Boolean, hasDigit: Boole
     return hasSelection && !given && (hasDigit || hasNotes)
 }
 
-/** The number already in the square cannot be entered again. A note key still toggles. */
-internal fun digitKeyEnabled(padEnabled: Boolean, notesOn: Boolean, alreadyEntered: Boolean): Boolean {
+/** A correct number already in the square is not offered again. A wrong one stays on so the tap can remove it. */
+internal fun digitKeyEnabled(
+    padEnabled: Boolean,
+    notesOn: Boolean,
+    alreadyEntered: Boolean,
+    wrong: Boolean = false,
+): Boolean {
     if (!padEnabled) return false
-    return notesOn || !alreadyEntered
+    if (notesOn) return true
+    if (alreadyEntered && wrong) return true
+    return !alreadyEntered
 }
 
-/** A wrong number is outlined, not filled, so the key does not look tappable. */
+/** A wrong number is outlined, not filled. Tapping it removes that number. */
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
 /** What TalkBack reads for one number key. */
@@ -81,7 +88,8 @@ internal fun numberKeyLabel(
 }
 
 /** What TalkBack calls the tap on a number key. */
-internal fun numberKeyAction(notesOn: Boolean, noted: Boolean): String = when {
+internal fun numberKeyAction(notesOn: Boolean, noted: Boolean, wrong: Boolean = false): String = when {
+    wrong -> "Remove"
     notesOn && noted -> "Remove note"
     notesOn -> "Add note"
     else -> "Enter"
@@ -181,11 +189,12 @@ private fun DigitRow(
     ) {
         for (digit in digits) {
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
+            val wrong = entered && enteredIsWrong && !notesOn
             DigitKey(
                 digit = digit,
-                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn),
+                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong),
                 entered = entered,
-                wrong = entered && enteredIsWrong && !notesOn,
+                wrong = wrong,
                 noted = notesOn && entered,
                 notesOn = notesOn,
                 given = given && entered,
@@ -211,7 +220,7 @@ private fun DigitKey(
     KeyFace(
         text = digit.toString(),
         description = numberKeyLabel(digit, entered, wrong, noted, given),
-        action = numberKeyAction(notesOn, noted),
+        action = numberKeyAction(notesOn, noted, wrong),
         enabled = enabled,
         entered = entered,
         wrong = wrong,

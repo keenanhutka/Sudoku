@@ -29,6 +29,7 @@ class NumberKeyTest {
     fun theNumberAlreadyInTheSquareIsNotOfferedAgain() {
         assertFalse(digitKeyEnabled(padEnabled = false, notesOn = false, alreadyEntered = false))
         assertFalse(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true))
+        assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = true, wrong = true))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = false, alreadyEntered = false))
         assertTrue(digitKeyEnabled(padEnabled = true, notesOn = true, alreadyEntered = true))
         assertTrue(wrongKeyOutlined(wrong = true))
@@ -43,6 +44,7 @@ class NumberKeyTest {
         assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
         assertEquals("5, noted", numberKeyLabel(5, entered = true, noted = true))
         assertEquals("Enter", numberKeyAction(notesOn = false, noted = false))
+        assertEquals("Remove", numberKeyAction(notesOn = false, noted = false, wrong = true))
         assertEquals("Add note", numberKeyAction(notesOn = true, noted = false))
         assertEquals("Remove note", numberKeyAction(notesOn = true, noted = true))
     }
