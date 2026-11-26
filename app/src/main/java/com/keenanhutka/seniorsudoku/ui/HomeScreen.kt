@@ -1,6 +1,7 @@
 package com.keenanhutka.seniorsudoku.ui
 
 import android.content.pm.ApplicationInfo
+import android.os.SystemClock
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,6 +70,26 @@ private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
 internal const val LeaveWarning = "This puzzle is not saved yet."
+/** A second tap just after removing a wrong number must not put that number back. */
+internal fun ignoreRepeatWrongDigit(
+    number: Int,
+    cell: Int,
+    boardDigit: Int,
+    clearedNumber: Int,
+    clearedCell: Int,
+    elapsedMs: Long,
+): Boolean {
+    if (boardDigit != 0) return false
+    if (number != clearedNumber || cell != clearedCell) return false
+    return elapsedMs in 0..700
+}
+
+private class ClearedWrongDigit {
+    var cell: Int = -1
+    var digit: Int = 0
+    var at: Long = 0L
+}
+
 internal const val HintMistake = "A number is wrong. Fix it before a hint."
 internal const val NoHint = "No simple hint right now."
 
@@ -201,6 +222,7 @@ fun HomeScreen() {
     var homeNotice by remember { mutableStateOf<String?>(null) }
     var confirmLeave by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
+    val clearedWrong = remember { ClearedWrongDigit() }
     val scope = rememberCoroutineScope()
     val debuggable = isDebuggable()
     val digit = selected?.let { game?.board?.get(it) } ?: 0
@@ -299,6 +321,9 @@ fun HomeScreen() {
         if (!notesOn && playing.isWrong(index) && playing.board[index] == number) {
             val next = playing.clearCell(index)
             if (next === playing) return@onDigit
+            clearedWrong.cell = index
+            clearedWrong.digit = number
+            clearedWrong.at = SystemClock.uptimeMillis()
             afterNumberChange(next)
             return@onDigit
         }
@@ -314,6 +339,10 @@ fun HomeScreen() {
             game = next
             if (checkMessage == BlockedNote) checkMessage = null
         } else {
+            val elapsed = SystemClock.uptimeMillis() - clearedWrong.at
+            if (ignoreRepeatWrongDigit(number, index, playing.board[index], clearedWrong.digit, clearedWrong.cell, elapsed)) {
+                return@onDigit
+            }
             val next = playing.enterDigit(index, number)
             if (next === playing) return@onDigit
             afterNumberChange(next)
