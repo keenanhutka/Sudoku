@@ -352,6 +352,7 @@ fun HomeScreen() {
         val playing = game ?: return@onUndo
         val next = playing.undo()
         if (next === playing) return@onUndo
+        heldOff = null
         afterNumberChange(next)
     }
     val onCheck: () -> Unit = onCheck@{

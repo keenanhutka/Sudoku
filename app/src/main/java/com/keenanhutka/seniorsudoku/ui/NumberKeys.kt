@@ -69,7 +69,10 @@ internal fun digitKeyEnabled(
     return !alreadyEntered
 }
 
-/** A held-off key is dim only while it cannot be tapped. Undo turns the number back on. */
+/** The removed number stays off, except while Notes is writing pencil marks. */
+internal fun heldOffKey(notesOn: Boolean, digit: Int, heldDigit: Int): Boolean {
+    return !notesOn && heldDigit != 0 && digit == heldDigit
+}
 internal fun quietHeldKey(held: Boolean, enabled: Boolean): Boolean = held && !enabled
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
@@ -198,7 +201,7 @@ private fun DigitRow(
         for (digit in digits) {
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
-            val held = heldOffDigit != 0 && digit == heldOffDigit
+            val held = heldOffKey(notesOn, digit, heldOffDigit)
             val keyOn = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held)
             DigitKey(
                 digit = digit,
