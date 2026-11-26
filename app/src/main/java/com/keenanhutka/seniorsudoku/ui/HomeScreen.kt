@@ -118,8 +118,12 @@ internal fun warningAfterLeavingHint(clearHint: Boolean, leftCellWrong: Boolean)
 internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
     hintShowing || askingToFix(message)
 
-/** A hint already on screen stays. Asking again must not replace that sentence. */
-internal fun keepCurrentHint(hintShowing: Boolean): Boolean = hintShowing
+/**
+ * A teaching hint stays while that square is wrong.
+ * Hint or Check must not replace it with a shorter warning.
+ */
+internal fun protectTeachingHint(hintShowing: Boolean, selectedWrong: Boolean): Boolean =
+    hintShowing && selectedWrong
 
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result == null
@@ -316,6 +320,7 @@ fun HomeScreen() {
     }
     val onCheck: () -> Unit = onCheck@{
         val playing = game ?: return@onCheck
+        if (hintShowing) return@onCheck
         val wrongs = playing.wrongCells()
         val message = mistakeMessage(wrongs.size, unfinished = !playing.isComplete())
         checkMessage = message
@@ -327,8 +332,9 @@ fun HomeScreen() {
         }
     }
     val onHint: () -> Unit = onHint@{
-        if (keepCurrentHint(hintShowing)) return@onHint
         val playing = game ?: return@onHint
+        val marked = selected
+        if (protectTeachingHint(hintShowing, marked != null && playing.isWrong(marked))) return@onHint
         val result = findHint(playing.board, playing.solution)
         checkMessage = hintMessage(result)
         noticeIsError = result is HintResult.MistakeFound
@@ -488,6 +494,8 @@ private fun PlayScreen(
                     PlayTools(
                         notesOn = notesOn,
                         notesEnabled = !notesLocked(checkMessage, hintShowing),
+                        reviewEnabled = !hintShowing,
+                        hintEnabled = !protectTeachingHint(hintShowing, wrong),
                         canUndo = canUndo,
                         debuggable = debuggable,
                         onNotes = onNotes,
@@ -531,6 +539,8 @@ private fun PlayScreen(
                 PlayTools(
                     notesOn = notesOn,
                     notesEnabled = !notesLocked(checkMessage, hintShowing),
+                    reviewEnabled = !hintShowing,
+                    hintEnabled = !protectTeachingHint(hintShowing, wrong),
                     canUndo = canUndo,
                     debuggable = debuggable,
                     onNotes = onNotes,
@@ -561,6 +571,8 @@ private fun PlayScreen(
 private fun PlayTools(
     notesOn: Boolean,
     notesEnabled: Boolean,
+    reviewEnabled: Boolean,
+    hintEnabled: Boolean,
     canUndo: Boolean,
     debuggable: Boolean,
     onNotes: () -> Unit,
@@ -590,11 +602,13 @@ private fun PlayTools(
             ToolButton(
                 text = "Hint",
                 action = "Show a hint",
+                enabled = hintEnabled,
                 onClick = onHint,
                 modifier = Modifier.widthIn(min = 88.dp).height(ToolHeight),
             )
             ToolButton(
                 text = "Check my numbers",
+                enabled = reviewEnabled,
                 onClick = onCheck,
                 modifier = Modifier.weight(1f).height(ToolHeight),
                 fontSize = 18.sp,
