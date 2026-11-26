@@ -125,6 +125,13 @@ internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
 internal fun protectTeachingHint(hintShowing: Boolean, selectedWrong: Boolean): Boolean =
     hintShowing && selectedWrong
 
+/**
+ * The teaching hint did not stay, and a wrong number is on the board.
+ * Show the warning instead of leaving that number with no message.
+ */
+internal fun showMistakeAfterHint(wasHint: Boolean, wrongCount: Int): Boolean =
+    wasHint && wrongCount > 0
+
 internal fun keepNotesOn(notesOn: Boolean, result: HintResult?): Boolean =
     notesOn && result == null
 
@@ -263,6 +270,15 @@ fun HomeScreen() {
         val selectedWrong = index != null && next.isWrong(index)
         if (before != null && keepTeachingHint(wasHint, before.board, next.board, index, selectedWrong)) {
             notesOn = false
+            return
+        }
+        val wrongs = next.wrongCells()
+        if (showMistakeAfterHint(wasHint, wrongs.size)) {
+            checkMessage = HintMistake
+            noticeIsError = true
+            hintShowing = false
+            notesOn = false
+            selected = wrongs.first()
             return
         }
         val digitNow = if (index != null) next.board[index] else -1
