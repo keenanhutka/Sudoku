@@ -111,6 +111,10 @@ internal fun keepTeachingHint(
     return after[selected] == 0 || selectedWrong
 }
 
+/** Leaving a hint on a wrong number keeps a warning, so Notes stay off. */
+internal fun warningAfterLeavingHint(clearHint: Boolean, leftCellWrong: Boolean): Boolean =
+    clearHint && leftCellWrong
+
 internal fun notesLocked(message: String?, hintShowing: Boolean): Boolean =
     hintShowing || askingToFix(message)
 
@@ -374,16 +378,27 @@ fun HomeScreen() {
                 debuggable = debuggable,
                 hintShowing = hintShowing,
                 onSelect = { index ->
+                    val previous = selected
                     val (next, clearHint) = selectionAfterTap(
-                        selected,
+                        previous,
                         index,
                         hintShowing,
                         mistakeShowing = askingToFix(checkMessage),
                     )
                     selected = next
                     if (clearHint || checkMessage == BlockedNote) {
-                        checkMessage = null
-                        hintShowing = false
+                        val leftWrong = current?.let { playing ->
+                            previous != null && playing.isWrong(previous)
+                        } == true
+                        if (warningAfterLeavingHint(clearHint, leftWrong)) {
+                            checkMessage = HintMistake
+                            noticeIsError = true
+                            hintShowing = false
+                            notesOn = false
+                        } else {
+                            checkMessage = null
+                            hintShowing = false
+                        }
                     }
                 },
                 onNotes = {
