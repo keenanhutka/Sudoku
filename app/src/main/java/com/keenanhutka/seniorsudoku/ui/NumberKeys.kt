@@ -69,7 +69,8 @@ internal fun digitKeyEnabled(
     return !alreadyEntered
 }
 
-/** A wrong number is outlined, not filled. Tapping it removes that number. */
+/** A held-off key is dim only while it cannot be tapped. Undo turns the number back on. */
+internal fun quietHeldKey(held: Boolean, enabled: Boolean): Boolean = held && !enabled
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
 /** What TalkBack reads for one number key. */
@@ -79,6 +80,7 @@ internal fun numberKeyLabel(
     wrong: Boolean = false,
     noted: Boolean = false,
     given: Boolean = false,
+    heldOff: Boolean = false,
 ): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
     return when {
@@ -86,6 +88,7 @@ internal fun numberKeyLabel(
         entered && wrong -> "$digit, wrong"
         entered && noted -> "$digit, noted"
         entered -> "$digit, entered"
+        heldOff -> "$digit, not for this square"
         else -> digit.toString()
     }
 }
@@ -196,10 +199,12 @@ private fun DigitRow(
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
             val held = heldOffDigit != 0 && digit == heldOffDigit
+            val keyOn = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held)
             DigitKey(
                 digit = digit,
-                enabled = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held),
-                quiet = held && !notesOn,
+                enabled = keyOn,
+                quiet = quietHeldKey(held, keyOn),
+                heldOff = held && !entered,
                 entered = entered,
                 wrong = wrong,
                 noted = notesOn && entered,
@@ -219,6 +224,7 @@ private fun DigitKey(
     entered: Boolean,
     wrong: Boolean,
     quiet: Boolean,
+    heldOff: Boolean,
     noted: Boolean,
     notesOn: Boolean,
     given: Boolean,
@@ -227,7 +233,7 @@ private fun DigitKey(
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered, wrong, noted, given),
+        description = numberKeyLabel(digit, entered, wrong, noted, given, heldOff = heldOff),
         action = numberKeyAction(notesOn, noted, wrong),
         enabled = enabled,
         entered = entered,
