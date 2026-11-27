@@ -86,6 +86,12 @@ class HomeScreenTest {
         assertFalse(heldOffDigit(5, 11, boardDigit = 0, heldCell = 10, heldNumber = 5))
         assertFalse(heldOffDigit(5, 10, boardDigit = 5, heldCell = 10, heldNumber = 5))
         assertFalse(heldOffDigit(5, 10, boardDigit = 0, heldCell = -1, heldNumber = 0))
+        val held = 10 to 5
+        assertEquals(held, releaseHeldOff(held, next = null))
+        assertEquals(held, releaseHeldOff(held, next = 10))
+        assertEquals(null, releaseHeldOff(held, next = 11))
+        assertEquals(null, heldOffAfterUndo(held, restoredDigit = 5))
+        assertEquals(held, heldOffAfterUndo(held, restoredDigit = 0))
         assertTrue(showMistakeAfterHint(wasHint = true, wrongCount = 1))
         assertFalse(showMistakeAfterHint(wasHint = true, wrongCount = 0))
         assertFalse(showMistakeAfterHint(wasHint = false, wrongCount = 2))

@@ -81,6 +81,19 @@ internal fun heldOffDigit(
     return number == heldNumber && cell == heldCell
 }
 
+/** Unmarking this square keeps the block. Marking a different square clears it. */
+internal fun releaseHeldOff(held: Pair<Int, Int>?, next: Int?): Pair<Int, Int>? {
+    if (held == null) return null
+    if (next == null || next == held.first) return held
+    return null
+}
+
+/** Undo clears the block only when that number is back in the square. */
+internal fun heldOffAfterUndo(held: Pair<Int, Int>?, restoredDigit: Int): Pair<Int, Int>? {
+    if (held == null) return null
+    return if (restoredDigit == held.second) null else held
+}
+
 internal const val HintMistake = "A number is wrong. Fix it before a hint."
 internal const val NoHint = "No simple hint right now."
 
@@ -288,6 +301,7 @@ fun HomeScreen() {
             hintShowing = false
             notesOn = false
             selected = wrongs.first()
+            heldOff = releaseHeldOff(heldOff, selected)
             return
         }
         val digitNow = if (index != null) next.board[index] else -1
@@ -302,7 +316,10 @@ fun HomeScreen() {
             checkMessage = update.message
             noticeIsError = true
             hintShowing = false
-            if (update.mark != null) selected = update.mark
+            if (update.mark != null) {
+                selected = update.mark
+                heldOff = releaseHeldOff(heldOff, update.mark)
+            }
         } else {
             clearNotice()
         }
@@ -352,7 +369,9 @@ fun HomeScreen() {
         val playing = game ?: return@onUndo
         val next = playing.undo()
         if (next === playing) return@onUndo
-        heldOff = null
+        val held = heldOff
+        val restored = if (held != null && held.first in 0 until Board.CELL_COUNT) next.board[held.first] else 0
+        heldOff = heldOffAfterUndo(held, restored)
         afterNumberChange(next)
     }
     val onCheck: () -> Unit = onCheck@{
@@ -364,7 +383,9 @@ fun HomeScreen() {
         noticeIsError = !message.startsWith("No mistakes")
         hintShowing = false
         if (wrongs.isNotEmpty()) {
-            selected = wrongs.first()
+            val mark = wrongs.first()
+            heldOff = releaseHeldOff(heldOff, mark)
+            selected = mark
             notesOn = false
         }
     }
@@ -376,7 +397,10 @@ fun HomeScreen() {
         noticeIsError = result is HintResult.MistakeFound
         hintShowing = result is HintResult.Single
         val index = hintIndex(result)
-        if (index != null) selected = index
+        if (index != null) {
+            heldOff = releaseHeldOff(heldOff, index)
+            selected = index
+        }
         notesOn = keepNotesOn(notesOn, result)
     }
     val onFill: () -> Unit = onFill@{
@@ -433,7 +457,7 @@ fun HomeScreen() {
                         mistakeShowing = askingToFix(checkMessage),
                     )
                     selected = next
-                    if (next != previous) heldOff = null
+                    heldOff = releaseHeldOff(heldOff, next)
                     if (clearHint || checkMessage == BlockedNote) {
                         val leftWrong = current?.let { playing ->
                             previous != null && playing.isWrong(previous)
