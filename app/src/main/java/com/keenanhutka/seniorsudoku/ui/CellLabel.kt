@@ -46,7 +46,7 @@ fun selectionLine(
         wrong -> "$where $digit is wrong."
         else -> "$where $digit."
     }
-    val blocked = heldOffSentence(heldOff - digit)
+    val blocked = heldOffSentence(heldOff - digit - notes)
     return if (blocked == null) body else "$body $blocked"
 }
 

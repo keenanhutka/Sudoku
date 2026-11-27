@@ -768,15 +768,26 @@ private fun ScreenHeader(
             modifier = Modifier.widthIn(min = 96.dp).height(homeButtonHeight()),
         )
     }
+    val selection = selectionLine(
+        index = selected,
+        digit = digit,
+        given = given,
+        wrong = wrong,
+        notes = notes,
+        heldOff = heldOff,
+    )
+    val selectionScroll = remember(selection) { ScrollState(0) }
+    val selectionMax = with(LocalDensity.current) {
+        val line = MaterialTheme.typography.titleLarge.lineHeight
+        val linePx = if (line == TextUnit.Unspecified) 0f else line.toPx()
+        val capPx = if (linePx <= 0f) 64.dp.toPx() else linePx * 2
+        noticeHeight(linePx, capPx).toDp()
+    }
     Text(
-        text = selectionLine(
-            index = selected,
-            digit = digit,
-            given = given,
-            wrong = wrong,
-            notes = notes,
-            heldOff = heldOff,
-        ),
+        text = selection,
+        modifier = Modifier
+            .heightIn(max = selectionMax)
+            .verticalScroll(selectionScroll),
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onBackground,
     )
