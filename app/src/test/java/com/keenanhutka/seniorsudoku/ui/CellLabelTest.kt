@@ -49,6 +49,18 @@ class CellLabelTest {
         assertEquals("Row 4, column 2. Given 8.", selectionLine(28, 8, given = true, wrong = false))
         assertEquals("Row 4, column 2. 3 is wrong.", selectionLine(28, 3, given = false, wrong = true))
         assertEquals("Row 4, column 2. Notes 1, 4.", selectionLine(28, 0, given = false, wrong = false, notes = setOf(4, 1)))
+        assertEquals(
+            "Row 4, column 2. 5 is not for this square.",
+            selectionLine(28, 0, given = false, wrong = false, heldOff = setOf(5)),
+        )
+        assertEquals(
+            "Row 4, column 2. 3 and 5 are not for this square.",
+            selectionLine(28, 0, given = false, wrong = false, heldOff = setOf(5, 3)),
+        )
+        assertEquals(
+            "Row 4, column 2. 7 is wrong. 5 is not for this square.",
+            selectionLine(28, 7, given = false, wrong = true, heldOff = setOf(5, 7)),
+        )
         assertEquals("Select", selectionAction(false))
         assertEquals("Deselect", selectionAction(true))
         assertEquals("Keep the hint", cellTapAction(marked = true, hintShowing = true))

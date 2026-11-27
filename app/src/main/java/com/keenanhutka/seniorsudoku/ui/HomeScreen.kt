@@ -547,7 +547,7 @@ private fun PlayScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, noticeIsError, onHome)
+                    ScreenHeader(title, selected, digit, given, wrong, notes, if (notesOn) emptySet() else heldDigits, checkMessage, noticeIsError, onHome)
                     SudokuBoard(
                         game = game,
                         selected = selected,
@@ -598,7 +598,7 @@ private fun PlayScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ScreenHeader(title, selected, digit, given, wrong, notes, checkMessage, noticeIsError, onHome)
+                ScreenHeader(title, selected, digit, given, wrong, notes, if (notesOn) emptySet() else heldDigits, checkMessage, noticeIsError, onHome)
                 SudokuBoard(
                     game = game,
                     selected = selected,
@@ -743,6 +743,7 @@ private fun ScreenHeader(
     given: Boolean,
     wrong: Boolean,
     notes: Set<Int>,
+    heldOff: Set<Int>,
     checkMessage: String?,
     noticeIsError: Boolean,
     onHome: () -> Unit,
@@ -774,6 +775,7 @@ private fun ScreenHeader(
             given = given,
             wrong = wrong,
             notes = notes,
+            heldOff = heldOff,
         ),
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onBackground,

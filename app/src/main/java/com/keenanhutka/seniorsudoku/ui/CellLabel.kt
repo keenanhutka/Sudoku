@@ -32,19 +32,35 @@ fun selectionLine(
     given: Boolean,
     wrong: Boolean,
     notes: Set<Int> = emptySet(),
+    heldOff: Set<Int> = emptySet(),
 ): String {
     if (index == null) return "Tap a square."
     require(index in 0 until Board.CELL_COUNT) { "Cell is out of range." }
     val row = index / Board.SIZE + 1
     val column = index % Board.SIZE + 1
     val where = "Row $row, column $column."
-    return when {
+    val body = when {
         digit == 0 && notes.isNotEmpty() -> "$where Notes ${notes.sorted().joinToString(", ")}."
         digit == 0 -> where
         given -> "$where Given $digit."
         wrong -> "$where $digit is wrong."
         else -> "$where $digit."
     }
+    val blocked = heldOffSentence(heldOff - digit)
+    return if (blocked == null) body else "$body $blocked"
+}
+
+/** Names the number keys that will not type in this square. */
+internal fun heldOffSentence(numbers: Set<Int>): String? {
+    val sorted = numbers.filter { it in 1..9 }.sorted()
+    if (sorted.isEmpty()) return null
+    val names = when (sorted.size) {
+        1 -> sorted[0].toString()
+        2 -> "${sorted[0]} and ${sorted[1]}"
+        else -> sorted.dropLast(1).joinToString(", ") + ", and " + sorted.last()
+    }
+    val verb = if (sorted.size == 1) "is" else "are"
+    return "$names $verb not for this square."
 }
 
 /** What TalkBack calls the tap. A second tap removes the mark. It does not erase the number. */
