@@ -69,29 +69,36 @@ private val ToolShape = RoundedCornerShape(8.dp)
 private const val BlockedNote = "That number is already in this row, column, or box."
 private const val CouldNotMake = "Could not make a puzzle. Try again."
 internal const val LeaveWarning = "This puzzle is not saved yet."
-/** The number just removed stays off until a different square is marked. */
+/** Numbers just removed stay off until a different square is marked. */
 internal fun heldOffDigit(
     number: Int,
     cell: Int,
     boardDigit: Int,
     heldCell: Int,
-    heldNumber: Int,
+    heldNumbers: Set<Int>,
 ): Boolean {
-    if (boardDigit != 0 || heldCell < 0) return false
-    return number == heldNumber && cell == heldCell
+    if (heldCell < 0 || cell != heldCell || number !in heldNumbers) return false
+    return boardDigit != number
+}
+
+/** Remember every number removed from this square, not only the latest one. */
+internal fun blockRemovedDigit(held: Pair<Int, Set<Int>>?, cell: Int, number: Int): Pair<Int, Set<Int>> {
+    val numbers = if (held != null && held.first == cell) held.second + number else setOf(number)
+    return cell to numbers
 }
 
 /** Unmarking this square keeps the block. Marking a different square clears it. */
-internal fun releaseHeldOff(held: Pair<Int, Int>?, next: Int?): Pair<Int, Int>? {
+internal fun releaseHeldOff(held: Pair<Int, Set<Int>>?, next: Int?): Pair<Int, Set<Int>>? {
     if (held == null) return null
     if (next == null || next == held.first) return held
     return null
 }
 
-/** Undo clears the block only when that number is back in the square. */
-internal fun heldOffAfterUndo(held: Pair<Int, Int>?, restoredDigit: Int): Pair<Int, Int>? {
-    if (held == null) return null
-    return if (restoredDigit == held.second) null else held
+/** Undo clears a block only for the number that came back. */
+internal fun heldOffAfterUndo(held: Pair<Int, Set<Int>>?, restoredDigit: Int): Pair<Int, Set<Int>>? {
+    if (held == null || restoredDigit == 0 || restoredDigit !in held.second) return held
+    val left = held.second - restoredDigit
+    return if (left.isEmpty()) null else held.first to left
 }
 
 internal const val HintMistake = "A number is wrong. Fix it before a hint."
@@ -226,7 +233,7 @@ fun HomeScreen() {
     var homeNotice by remember { mutableStateOf<String?>(null) }
     var confirmLeave by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
-    var heldOff by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var heldOff by remember { mutableStateOf<Pair<Int, Set<Int>>?>(null) }
     val scope = rememberCoroutineScope()
     val debuggable = isDebuggable()
     val digit = selected?.let { game?.board?.get(it) } ?: 0
@@ -236,7 +243,7 @@ fun HomeScreen() {
     val cellEmpty = digit == 0
     val accept = keysAcceptDigit(selected != null, given, notesOn, cellEmpty)
     val canErase = canEraseCell(selected != null, given, digit != 0, notes.isNotEmpty())
-    val heldDigit = heldOff?.let { (cell, number) -> if (cell == selected) number else 0 } ?: 0
+    val heldDigits = heldOff?.let { (cell, numbers) -> if (cell == selected) numbers else emptySet() } ?: emptySet()
 
     fun clearNotice() {
         checkMessage = null
@@ -332,7 +339,7 @@ fun HomeScreen() {
         if (!notesOn && playing.isWrong(index) && playing.board[index] == number) {
             val next = playing.clearCell(index)
             if (next === playing) return@onDigit
-            heldOff = index to number
+            heldOff = blockRemovedDigit(heldOff, index, number)
             afterNumberChange(next)
             return@onDigit
         }
@@ -447,7 +454,7 @@ fun HomeScreen() {
                 canUndo = current.canUndo(),
                 debuggable = debuggable,
                 hintShowing = hintShowing,
-                heldDigit = heldDigit,
+                heldDigits = heldDigits,
                 onSelect = { index ->
                     val previous = selected
                     val (next, clearHint) = selectionAfterTap(
@@ -508,7 +515,7 @@ private fun PlayScreen(
     canUndo: Boolean,
     debuggable: Boolean,
     hintShowing: Boolean,
-    heldDigit: Int,
+    heldDigits: Set<Int>,
     onSelect: (Int) -> Unit,
     onNotes: () -> Unit,
     onUndo: () -> Unit,
@@ -575,7 +582,7 @@ private fun PlayScreen(
                         notesOn = notesOn,
                         notedDigits = notes,
                         given = given,
-                        heldOffDigit = heldDigit,
+                        heldOffDigits = heldDigits,
                         onDigit = onDigit,
                         onErase = onErase,
                         modifier = Modifier.fillMaxWidth().weight(1f),
@@ -621,7 +628,7 @@ private fun PlayScreen(
                     notesOn = notesOn,
                     notedDigits = notes,
                     given = given,
-                    heldOffDigit = heldDigit,
+                    heldOffDigits = heldDigits,
                     onDigit = onDigit,
                     onErase = onErase,
                     modifier = Modifier.fillMaxWidth(),

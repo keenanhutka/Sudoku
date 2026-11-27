@@ -69,9 +69,9 @@ internal fun digitKeyEnabled(
     return !alreadyEntered
 }
 
-/** The removed number stays off, except while Notes is writing pencil marks. */
-internal fun heldOffKey(notesOn: Boolean, digit: Int, heldDigit: Int): Boolean {
-    return !notesOn && heldDigit != 0 && digit == heldDigit
+/** The removed numbers stay off, except while Notes is writing pencil marks. */
+internal fun heldOffKey(notesOn: Boolean, digit: Int, heldDigits: Set<Int>): Boolean {
+    return !notesOn && digit in heldDigits
 }
 internal fun quietHeldKey(held: Boolean, enabled: Boolean): Boolean = held && !enabled
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
@@ -138,7 +138,7 @@ fun NumberKeys(
     notesOn: Boolean = false,
     notedDigits: Set<Int> = emptySet(),
     given: Boolean = false,
-    heldOffDigit: Int = 0,
+    heldOffDigits: Set<Int> = emptySet(),
 ) {
     val height = fittedHeight(maxHeight)
     // 1 stays on the left even when the phone language is right to left.
@@ -147,9 +147,9 @@ fun NumberKeys(
             modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
-            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
-            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigit, onDigit, height)
+            DigitRow(intArrayOf(1, 2, 3), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigits, onDigit, height)
+            DigitRow(intArrayOf(4, 5, 6), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigits, onDigit, height)
+            DigitRow(intArrayOf(7, 8, 9), enabled, enteredDigit, enteredIsWrong, notesOn, notedDigits, given, heldOffDigits, onDigit, height)
             WordKey(
                 text = "Erase",
                 enabled = eraseEnabled,
@@ -190,7 +190,7 @@ private fun DigitRow(
     notesOn: Boolean,
     notedDigits: Set<Int>,
     given: Boolean,
-    heldOffDigit: Int,
+    heldOffDigits: Set<Int>,
     onDigit: (Int) -> Unit,
     height: Dp,
 ) {
@@ -201,7 +201,7 @@ private fun DigitRow(
         for (digit in digits) {
             val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
-            val held = heldOffKey(notesOn, digit, heldOffDigit)
+            val held = heldOffKey(notesOn, digit, heldOffDigits)
             val keyOn = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held)
             DigitKey(
                 digit = digit,
