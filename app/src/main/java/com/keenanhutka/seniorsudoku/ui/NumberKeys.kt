@@ -275,7 +275,7 @@ private fun WordKey(
         enabled = enabled,
         entered = false,
         wrong = false,
-        quiet = false,
+        quiet = quietKey(enabled, entered = false),
         onClick = onClick,
         modifier = modifier,
         fontSize = WordText,
