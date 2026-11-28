@@ -41,7 +41,7 @@ class NumberKeyTest {
     @Test
     fun theEnteredNumberIsNamed() {
         assertEquals("5", numberKeyLabel(5, entered = false))
-        assertEquals("5, entered", numberKeyLabel(5, entered = true))
+        assertEquals("5, erase to change it.", numberKeyLabel(5, entered = true))
         assertEquals("5, given", numberKeyLabel(5, entered = true, given = true))
         assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
         assertEquals("5, not for this square", numberKeyLabel(5, entered = false, heldOff = true))
@@ -50,9 +50,8 @@ class NumberKeyTest {
         assertEquals("5, not for this square", numberKeyLabel(5, entered = false, heldOff = true, needsErase = true))
         assertFalse(quietHeldKey(held = true, enabled = true))
         assertTrue(quietHeldKey(held = true, enabled = false))
-        assertFalse(quietKey(enabled = true, entered = false))
-        assertFalse(quietKey(enabled = false, entered = true))
-        assertTrue(quietKey(enabled = false, entered = false))
+        assertFalse(quietKey(enabled = true))
+        assertTrue(quietKey(enabled = false))
         assertTrue(heldOffKey(notesOn = false, digit = 5, heldDigits = setOf(5, 3)))
         assertTrue(heldOffKey(notesOn = false, digit = 3, heldDigits = setOf(5, 3)))
         assertFalse(heldOffKey(notesOn = true, digit = 5, heldDigits = setOf(5)))

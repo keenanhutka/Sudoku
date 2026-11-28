@@ -75,8 +75,8 @@ internal fun heldOffKey(notesOn: Boolean, digit: Int, heldDigits: Set<Int>): Boo
 }
 internal fun quietHeldKey(held: Boolean, enabled: Boolean): Boolean = held && !enabled
 
-/** A key that will not take a tap should look quiet, except the number already in the square. */
-internal fun quietKey(enabled: Boolean, entered: Boolean): Boolean = !enabled && !entered
+/** A key that will not take a tap should look quiet, including the number already in the square. */
+internal fun quietKey(enabled: Boolean): Boolean = !enabled
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
 /** What TalkBack reads for one number key. */
@@ -95,7 +95,7 @@ internal fun numberKeyLabel(
         entered && given -> "$digit, given"
         entered && wrong -> "$digit, wrong"
         entered && noted -> "$digit, noted"
-        entered -> "$digit, entered"
+        entered -> "$digit, erase to change it."
         heldOff && pencil -> "$digit, key stays off"
         heldOff -> "$digit, not for this square"
         needsErase -> "$digit, erase first"
@@ -215,7 +215,7 @@ private fun DigitRow(
             DigitKey(
                 digit = digit,
                 enabled = keyOn,
-                quiet = quietKey(keyOn, entered),
+                quiet = quietKey(keyOn),
                 heldOff = held && !entered,
                 pencil = pencil,
                 needsErase = needsErase,
@@ -275,7 +275,7 @@ private fun WordKey(
         enabled = enabled,
         entered = false,
         wrong = false,
-        quiet = quietKey(enabled, entered = false),
+        quiet = quietKey(enabled),
         onClick = onClick,
         modifier = modifier,
         fontSize = WordText,
