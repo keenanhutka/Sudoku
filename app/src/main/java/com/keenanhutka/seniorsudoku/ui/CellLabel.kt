@@ -46,8 +46,12 @@ fun selectionLine(
         wrong -> "$where $digit is wrong."
         else -> "$where $digit."
     }
-    val blocked = heldOffSentence(heldOff - digit - notes)
-    return if (blocked == null) body else "$body $blocked"
+    val off = (heldOff - digit).filter { it in 1..9 }.toSet()
+    val extra = listOfNotNull(
+        heldOffSentence(off - notes),
+        staysOffSentence(off.intersect(notes)),
+    ).joinToString(" ")
+    return if (extra.isEmpty()) body else "$body $extra"
 }
 
 /** Names the number keys that will not type in this square. */
@@ -61,6 +65,19 @@ internal fun heldOffSentence(numbers: Set<Int>): String? {
     }
     val verb = if (sorted.size == 1) "is" else "are"
     return "$names $verb not for this square."
+}
+
+/** A pencil mark can stay. The number key still will not type it. */
+internal fun staysOffSentence(numbers: Set<Int>): String? {
+    val sorted = numbers.filter { it in 1..9 }.sorted()
+    if (sorted.isEmpty()) return null
+    val names = when (sorted.size) {
+        1 -> sorted[0].toString()
+        2 -> "${sorted[0]} and ${sorted[1]}"
+        else -> sorted.dropLast(1).joinToString(", ") + ", and " + sorted.last()
+    }
+    val verb = if (sorted.size == 1) "stays" else "stay"
+    return "$names $verb off."
 }
 
 /** What TalkBack calls the tap. A second tap removes the mark. It does not erase the number. */

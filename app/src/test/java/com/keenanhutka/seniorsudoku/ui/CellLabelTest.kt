@@ -62,12 +62,12 @@ class CellLabelTest {
             selectionLine(28, 7, given = false, wrong = true, heldOff = setOf(5, 7)),
         )
         assertEquals(
-            "Row 4, column 2. Notes 1, 5.",
+            "Row 4, column 2. Notes 1, 5. 5 stays off.",
             selectionLine(28, 0, given = false, wrong = false, notes = setOf(1, 5), heldOff = setOf(5)),
         )
         assertEquals(
-            "Row 4, column 2. Notes 1. 3 is not for this square.",
-            selectionLine(28, 0, given = false, wrong = false, notes = setOf(1), heldOff = setOf(3)),
+            "Row 4, column 2. Notes 1, 3. 5 is not for this square. 3 stays off.",
+            selectionLine(28, 0, given = false, wrong = false, notes = setOf(1, 3), heldOff = setOf(3, 5)),
         )
         assertEquals("Select", selectionAction(false))
         assertEquals("Deselect", selectionAction(true))

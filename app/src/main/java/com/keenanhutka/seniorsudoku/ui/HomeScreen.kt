@@ -780,7 +780,7 @@ private fun ScreenHeader(
     val selectionMax = with(LocalDensity.current) {
         val line = MaterialTheme.typography.titleLarge.lineHeight
         val linePx = if (line == TextUnit.Unspecified) 0f else line.toPx()
-        val capPx = if (linePx <= 0f) 64.dp.toPx() else linePx * 2
+        val capPx = if (linePx <= 0f) 96.dp.toPx() else linePx * 3
         noticeHeight(linePx, capPx).toDp()
     }
     Text(
