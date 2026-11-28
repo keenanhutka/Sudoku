@@ -84,6 +84,7 @@ internal fun numberKeyLabel(
     noted: Boolean = false,
     given: Boolean = false,
     heldOff: Boolean = false,
+    pencil: Boolean = false,
 ): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
     return when {
@@ -91,6 +92,7 @@ internal fun numberKeyLabel(
         entered && wrong -> "$digit, wrong"
         entered && noted -> "$digit, noted"
         entered -> "$digit, entered"
+        heldOff && pencil -> "$digit, key stays off"
         heldOff -> "$digit, not for this square"
         else -> digit.toString()
     }
@@ -199,7 +201,8 @@ private fun DigitRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         for (digit in digits) {
-            val entered = if (notesOn) digit in notedDigits else enteredDigit == digit
+            val pencil = digit in notedDigits
+            val entered = if (notesOn) pencil else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
             val held = heldOffKey(notesOn, digit, heldOffDigits)
             val keyOn = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held)
@@ -208,6 +211,7 @@ private fun DigitRow(
                 enabled = keyOn,
                 quiet = quietHeldKey(held, keyOn),
                 heldOff = held && !entered,
+                pencil = pencil,
                 entered = entered,
                 wrong = wrong,
                 noted = notesOn && entered,
@@ -228,6 +232,7 @@ private fun DigitKey(
     wrong: Boolean,
     quiet: Boolean,
     heldOff: Boolean,
+    pencil: Boolean,
     noted: Boolean,
     notesOn: Boolean,
     given: Boolean,
@@ -236,7 +241,7 @@ private fun DigitKey(
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered, wrong, noted, given, heldOff = heldOff),
+        description = numberKeyLabel(digit, entered, wrong, noted, given, heldOff = heldOff, pencil = pencil),
         action = numberKeyAction(notesOn, noted, wrong),
         enabled = enabled,
         entered = entered,

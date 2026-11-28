@@ -45,6 +45,7 @@ class NumberKeyTest {
         assertEquals("5, given", numberKeyLabel(5, entered = true, given = true))
         assertEquals("5, wrong", numberKeyLabel(5, entered = true, wrong = true))
         assertEquals("5, not for this square", numberKeyLabel(5, entered = false, heldOff = true))
+        assertEquals("5, key stays off", numberKeyLabel(5, entered = false, heldOff = true, pencil = true))
         assertFalse(quietHeldKey(held = true, enabled = true))
         assertTrue(quietHeldKey(held = true, enabled = false))
         assertTrue(heldOffKey(notesOn = false, digit = 5, heldDigits = setOf(5, 3)))

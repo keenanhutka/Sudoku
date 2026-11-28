@@ -76,8 +76,8 @@ internal fun staysOffSentence(numbers: Set<Int>): String? {
         2 -> "${sorted[0]} and ${sorted[1]}"
         else -> sorted.dropLast(1).joinToString(", ") + ", and " + sorted.last()
     }
-    val verb = if (sorted.size == 1) "stays" else "stay"
-    return "$names $verb off."
+    val verb = if (sorted.size == 1) "key stays" else "keys stay"
+    return "The $names $verb off."
 }
 
 /** What TalkBack calls the tap. A second tap removes the mark. It does not erase the number. */
