@@ -74,6 +74,9 @@ internal fun heldOffKey(notesOn: Boolean, digit: Int, heldDigits: Set<Int>): Boo
     return !notesOn && digit in heldDigits
 }
 internal fun quietHeldKey(held: Boolean, enabled: Boolean): Boolean = held && !enabled
+
+/** A key that will not take a tap should look quiet, except the number already in the square. */
+internal fun quietKey(enabled: Boolean, entered: Boolean): Boolean = !enabled && !entered
 internal fun wrongKeyOutlined(wrong: Boolean): Boolean = wrong
 
 /** What TalkBack reads for one number key. */
@@ -85,6 +88,7 @@ internal fun numberKeyLabel(
     given: Boolean = false,
     heldOff: Boolean = false,
     pencil: Boolean = false,
+    needsErase: Boolean = false,
 ): String {
     require(digit in 1..9) { "A digit is 1 to 9." }
     return when {
@@ -94,6 +98,7 @@ internal fun numberKeyLabel(
         entered -> "$digit, entered"
         heldOff && pencil -> "$digit, key stays off"
         heldOff -> "$digit, not for this square"
+        needsErase -> "$digit, erase first"
         else -> digit.toString()
     }
 }
@@ -205,13 +210,15 @@ private fun DigitRow(
             val entered = if (notesOn) pencil else enteredDigit == digit
             val wrong = entered && enteredIsWrong && !notesOn
             val held = heldOffKey(notesOn, digit, heldOffDigits)
+            val needsErase = !notesOn && !given && enteredDigit != 0 && !enteredIsWrong
             val keyOn = digitKeyEnabled(enabled, notesOn, entered && !notesOn, wrong, heldOff = held)
             DigitKey(
                 digit = digit,
                 enabled = keyOn,
-                quiet = quietHeldKey(held, keyOn),
+                quiet = quietKey(keyOn, entered),
                 heldOff = held && !entered,
                 pencil = pencil,
+                needsErase = needsErase,
                 entered = entered,
                 wrong = wrong,
                 noted = notesOn && entered,
@@ -233,6 +240,7 @@ private fun DigitKey(
     quiet: Boolean,
     heldOff: Boolean,
     pencil: Boolean,
+    needsErase: Boolean,
     noted: Boolean,
     notesOn: Boolean,
     given: Boolean,
@@ -241,7 +249,7 @@ private fun DigitKey(
 ) {
     KeyFace(
         text = digit.toString(),
-        description = numberKeyLabel(digit, entered, wrong, noted, given, heldOff = heldOff, pencil = pencil),
+        description = numberKeyLabel(digit, entered, wrong, noted, given, heldOff = heldOff, pencil = pencil, needsErase = needsErase),
         action = numberKeyAction(notesOn, noted, wrong),
         enabled = enabled,
         entered = entered,

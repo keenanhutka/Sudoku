@@ -48,7 +48,7 @@ fun selectionLine(
         digit == 0 -> null
         given -> "Given $digit."
         wrong -> "$digit is wrong."
-        else -> "$digit."
+        else -> "$digit is entered. Erase to change it."
     }
     val off = (heldOff - digit).filter { it in 1..9 }.toSet()
     val parts = listOfNotNull(
