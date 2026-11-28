@@ -39,19 +39,26 @@ fun selectionLine(
     val row = index / Board.SIZE + 1
     val column = index % Board.SIZE + 1
     val where = "Row $row, column $column."
-    val body = when {
-        digit == 0 && notes.isNotEmpty() -> "$where Notes ${notes.sorted().joinToString(", ")}."
-        digit == 0 -> where
-        given -> "$where Given $digit."
-        wrong -> "$where $digit is wrong."
-        else -> "$where $digit."
+    val notesLine = if (digit == 0 && notes.isNotEmpty()) {
+        "Notes ${notes.sorted().joinToString(", ")}."
+    } else {
+        null
+    }
+    val state = when {
+        digit == 0 -> null
+        given -> "Given $digit."
+        wrong -> "$digit is wrong."
+        else -> "$digit."
     }
     val off = (heldOff - digit).filter { it in 1..9 }.toSet()
-    val extra = listOfNotNull(
-        heldOffSentence(off - notes),
+    val parts = listOfNotNull(
+        where,
+        state,
         staysOffSentence(off.intersect(notes)),
-    ).joinToString(" ")
-    return if (extra.isEmpty()) body else "$body $extra"
+        heldOffSentence(off - notes),
+        notesLine,
+    )
+    return parts.joinToString(" ")
 }
 
 /** Names the number keys that will not type in this square. */
